@@ -9,7 +9,7 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ onFileUpload, onFetchApi, apiUrl, isLoading }: SettingsViewProps) {
-  const [urlInput, setUrlInput] = useState(apiUrl);
+  const [urlInput, setUrlInput] = useState(apiUrl|| "https://raw.githubusercontent.com/cheikhoudieng/stream-data/refs/heads/main/live/output/events.json");
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, FormEvent, useCallback } from 'react';
 import Hls from 'hls.js';
 import shaka from 'shaka-player/dist/shaka-player.compiled.js';
-import { Play, Pause, Volume2, VolumeX, Maximize, Lock, Unlock, X, MonitorPlay, PictureInPicture, Terminal, Layers, Calendar, Clock, Tv } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Lock, Unlock, X, MonitorPlay, PictureInPicture, Terminal, Layers, Calendar, Clock, Tv, Captions, Languages, RefreshCw } from 'lucide-react';
 import { EventItem } from '../types';
 
 interface Source {
@@ -15,8 +15,16 @@ interface Source {
   label: string;
 }
 
+interface TrackOption {
+  id: number | string;
+  label: string;
+  language?: string;
+}
+
 const resizeModes = ['contain', 'cover', 'fill'] as const;
 const resizeLabels = { contain: 'AJUSTER', cover: 'ZOOM', fill: 'REMPLIR' };
+
+const MAX_AUTO_RETRIES = 5;
 
 const FORBIDDEN_HEADERS = [
   'user-agent', 'referer', 'cookie', 'host', 'origin', 'content-length',
@@ -100,6 +108,7 @@ export function PlayerView({
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const tracksMenuRef = useRef<HTMLDivElement>(null);
   
   const hlsRef = useRef<any>(null);
   const shakaRef = useRef<any>(null);
@@ -116,6 +125,15 @@ export function PlayerView({
   const [duration, setDuration] = useState(0);
   const [bufferedEnd, setBufferedEnd] = useState(0);
   const [scrubbing, setScrubbing] = useState(false);
+
+  const [subtitleTracks, setSubtitleTracks] = useState<TrackOption[]>([]);
+  const [audioTracks, setAudioTracks] = useState<TrackOption[]>([]);
+  const [activeSubtitleId, setActiveSubtitleId] = useState<number | string>(-1);
+  const [activeAudioId, setActiveAudioId] = useState<number | string>(-1);
+  const [tracksMenuOpen, setTracksMenuOpen] = useState<'subtitles' | 'audio' | null>(null);
+
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const retryCountRef = useRef(0);
   
   const [status, setStatus] = useState<'ARRÊTÉ' | 'CHARGEMENT' | 'LECTURE' | 'PAUSE' | 'TERMINÉ' | 'ERREUR'>('ARRÊTÉ');
 
@@ -171,18 +189,98 @@ export function PlayerView({
   }, [addLog]);
 
   const sourcesRef = useRef<Source[]>([]);
+  const activeIndexRef = useRef(-1);
+  // Holds the latest loadSource implementation so scheduleRetry can call it
+  // without creating a circular useCallback dependency.
+  const loadSourceRef = useRef<(idx: number, isRetry?: boolean) => void>();
 
   useEffect(() => {
     sourcesRef.current = sources;
   }, [sources]);
 
-  const loadSource = useCallback(async (idx: number) => {
+  useEffect(() => {
+    activeIndexRef.current = activeIndex;
+  }, [activeIndex]);
+
+  // Auto-retry: fires immediately (no delay) on fatal playback errors,
+  // up to MAX_AUTO_RETRIES, then surfaces a manual retry button.
+  const scheduleRetry = useCallback((idx: number) => {
+    if (idx < 0) return;
+    if (retryCountRef.current >= MAX_AUTO_RETRIES) {
+      addLog(`Échec après ${MAX_AUTO_RETRIES} tentatives automatiques.`, 'error');
+      setRetryAttempt(retryCountRef.current);
+      setStatus('ERREUR');
+      setIsLoading(false);
+      return;
+    }
+    retryCountRef.current += 1;
+    setRetryAttempt(retryCountRef.current);
+    addLog(`Reconnexion automatique (tentative ${retryCountRef.current}/${MAX_AUTO_RETRIES})...`, 'warn');
+    loadSourceRef.current?.(idx, true);
+  }, [addLog]);
+
+  const refreshHlsTracks = useCallback((hls: any) => {
+    const subs: TrackOption[] = (hls.subtitleTracks || []).map((t: any) => ({
+      id: t.id,
+      label: t.name || t.lang || `Sous-titres ${t.id + 1}`,
+      language: t.lang
+    }));
+    setSubtitleTracks(subs);
+    setActiveSubtitleId(hls.subtitleTrack);
+
+    const auds: TrackOption[] = (hls.audioTracks || []).map((t: any) => ({
+      id: t.id,
+      label: t.name || t.lang || `Audio ${t.id + 1}`,
+      language: t.lang
+    }));
+    setAudioTracks(auds);
+    setActiveAudioId(hls.audioTrack);
+  }, []);
+
+  const refreshShakaTracks = useCallback((player: any) => {
+    try {
+      const texts = player.getTextTracks();
+      setSubtitleTracks(texts.map((t: any) => ({
+        id: t.id,
+        label: t.label || t.language || `Sous-titres ${t.id}`,
+        language: t.language
+      })));
+      setActiveSubtitleId(-1); // sous-titres masqués par défaut
+
+      const variants = player.getVariantTracks();
+      const seen = new Set<string>();
+      const auds: TrackOption[] = [];
+      variants.forEach((t: any) => {
+        if (!t.language || seen.has(t.language)) return;
+        seen.add(t.language);
+        auds.push({ id: t.language, label: t.language });
+      });
+      setAudioTracks(auds);
+      const active = variants.find((t: any) => t.active);
+      setActiveAudioId(active ? active.language : -1);
+    } catch (e) {
+      addLog('Impossible de récupérer les pistes audio/sous-titres.', 'warn');
+    }
+  }, [addLog]);
+
+  const loadSource = useCallback(async (idx: number, isRetry = false) => {
     const source = sourcesRef.current[idx];
     if (!source) return;
+
+    if (!isRetry) {
+      retryCountRef.current = 0;
+      setRetryAttempt(0);
+    }
+
     setActiveIndex(idx);
     destroyEngines();
     setIsLoading(true);
     setStatus('CHARGEMENT');
+    setSubtitleTracks([]);
+    setAudioTracks([]);
+    setActiveSubtitleId(-1);
+    setActiveAudioId(-1);
+    setTracksMenuOpen(null);
 
     if (videoRef.current) {
       videoRef.current.style.objectFit = source.resizeMode;
@@ -218,9 +316,17 @@ export function PlayerView({
         hls.on(Hls.Events.ERROR, (evt: any, data: any) => {
           if (data.fatal) {
             addLog(`Erreur HLS fatale : ${data.type} — ${data.details}`, 'error');
-            setStatus('ERREUR');
+            scheduleRetry(idx);
           }
         });
+
+        // Subtitle/audio tracks are discovered from the manifest and stay
+        // in sync with currentTime automatically — HLS.js feeds them into
+        // the video element's native TextTrack cues, which the browser
+        // renders against video.currentTime on every frame.
+        hls.on(Hls.Events.MANIFEST_PARSED, () => refreshHlsTracks(hls));
+        hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, () => refreshHlsTracks(hls));
+        hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => refreshHlsTracks(hls));
         
         hls.loadSource(source.url);
         hls.attachMedia(videoRef.current!);
@@ -229,7 +335,7 @@ export function PlayerView({
         addLog('Lecture HLS native (Safari Apple).', 'ok');
       } else {
         addLog('HLS non supporté par ce navigateur.', 'error');
-        setStatus('ERREUR');
+        scheduleRetry(idx);
       }
       attemptPlay();
     } else if (source.format === 'dash') {
@@ -250,7 +356,7 @@ export function PlayerView({
 
       player.addEventListener('error', (e: any) => {
         addLog('Erreur Shaka : ' + e.detail.code, 'error');
-        setStatus('ERREUR');
+        scheduleRetry(idx);
       });
 
       const shakaConfig: any = {
@@ -278,10 +384,14 @@ export function PlayerView({
 
       player.load(source.url).then(() => {
         addLog('DASH chargé avec succès.', 'ok');
+        // Shaka's own text/caption renderer is driven off video.currentTime
+        // internally, so once a track is selected it stays frame-accurate
+        // with the timeline without any extra wiring on our side.
+        refreshShakaTracks(player);
         attemptPlay();
       }).catch((e: any) => {
         addLog('Erreur de chargement DASH : ' + e.message, 'error');
-        setStatus('ERREUR');
+        scheduleRetry(idx);
       });
 
     } else {
@@ -298,7 +408,11 @@ export function PlayerView({
         attemptPlay();
       }
     }
-  }, [sources, destroyEngines, addLog, attemptPlay]);
+  }, [destroyEngines, addLog, attemptPlay, scheduleRetry, refreshHlsTracks, refreshShakaTracks]);
+
+  useEffect(() => {
+    loadSourceRef.current = loadSource;
+  }, [loadSource]);
 
   const setupNativeClearKey = async (videoEl: HTMLVideoElement, clearkeysText: string) => {
     const pairs = parseClearkeyLines(clearkeysText);
@@ -335,6 +449,68 @@ export function PlayerView({
     }
   };
 
+  // Subtitle/audio selection — works across all three playback engines and
+  // never has to "seek to resync": native TextTrack cues and Shaka's
+  // SimpleTextDisplayer both render against video.currentTime continuously,
+  // so once a track is on, it tracks the timeline on its own.
+  const selectSubtitle = useCallback((id: number | string) => {
+    if (hlsRef.current) {
+      if (id === -1) {
+        hlsRef.current.subtitleDisplay = false;
+      } else {
+        hlsRef.current.subtitleTrack = id as number;
+        hlsRef.current.subtitleDisplay = true;
+      }
+      setActiveSubtitleId(id);
+    } else if (shakaRef.current) {
+      if (id === -1) {
+        shakaRef.current.setTextTrackVisibility(false);
+      } else {
+        const track = shakaRef.current.getTextTracks().find((t: any) => t.id === id);
+        if (track) {
+          shakaRef.current.selectTextTrack(track);
+          shakaRef.current.setTextTrackVisibility(true);
+        }
+      }
+      setActiveSubtitleId(id);
+    } else if (videoRef.current) {
+      Array.from(videoRef.current.textTracks).forEach((t, i) => {
+        t.mode = i === id ? 'showing' : 'disabled';
+      });
+      setActiveSubtitleId(id);
+    }
+    setTracksMenuOpen(null);
+  }, []);
+
+  const selectAudioTrack = useCallback((id: number | string) => {
+    if (hlsRef.current) {
+      hlsRef.current.audioTrack = id as number;
+      setActiveAudioId(id);
+    } else if (shakaRef.current) {
+      const variants = shakaRef.current.getVariantTracks();
+      const track = variants.find((t: any) => t.language === id);
+      if (track) {
+        // clearBuffer + a small safeMargin keeps playback within ~0.5s of
+        // where it was, so the audio swap feels instant on the timeline.
+        shakaRef.current.selectVariantTrack(track, true, 0.5);
+        setActiveAudioId(id);
+      }
+    }
+    setTracksMenuOpen(null);
+  }, []);
+
+  // Close the subtitles/audio popover on outside click
+  useEffect(() => {
+    if (!tracksMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (tracksMenuRef.current && !tracksMenuRef.current.contains(e.target as Node)) {
+        setTracksMenuOpen(null);
+      }
+    };
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, [tracksMenuOpen]);
+
   // Video Events
   useEffect(() => {
     const video = videoRef.current;
@@ -349,8 +525,7 @@ export function PlayerView({
     const onError = () => {
       const err = video.error;
       addLog('Erreur média' + (err ? ' (code ' + err.code + ')' : ''), 'error');
-      setStatus('ERREUR');
-      setIsLoading(false);
+      scheduleRetry(activeIndexRef.current);
     };
 
     const onTimeUpdate = () => {
@@ -389,7 +564,7 @@ export function PlayerView({
       video.removeEventListener('timeupdate', onTimeUpdate);
       video.removeEventListener('progress', onProgress);
     };
-  }, [addLog]);
+  }, [addLog, scheduleRetry]);
 
   // Keyboard controls
   useEffect(() => {
@@ -458,6 +633,12 @@ export function PlayerView({
     }
   };
 
+  const retryNow = () => {
+    retryCountRef.current = 0;
+    setRetryAttempt(0);
+    if (activeIndexRef.current >= 0) loadSource(activeIndexRef.current);
+  };
+
   // Timeline scrub
   const seekFromEvent = useCallback((e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
     if (!timelineRef.current || !videoRef.current) return;
@@ -516,7 +697,7 @@ export function PlayerView({
               status === 'ERREUR' ? 'text-red-400 bg-red-500/10' :
               status === 'CHARGEMENT' ? 'text-amber-400 bg-amber-500/10' : 'text-slate-500 bg-slate-800'
             }`}>
-              {status}
+              {status}{status === 'CHARGEMENT' && retryAttempt > 0 ? ` (${retryAttempt}/${MAX_AUTO_RETRIES})` : ''}
             </span>
           </div>
 
@@ -533,9 +714,25 @@ export function PlayerView({
               onClick={togglePlay}
             />
             
-            {isLoading && (
+            {isLoading && status !== 'ERREUR' && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none z-10">
                 <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+              </div>
+            )}
+
+            {status === 'ERREUR' && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-20 gap-3 px-4 text-center">
+                <span className="text-sm font-mono text-red-400">
+                  {retryAttempt >= MAX_AUTO_RETRIES
+                    ? `Échec après ${MAX_AUTO_RETRIES} tentatives automatiques`
+                    : 'Erreur de lecture'}
+                </span>
+                <button
+                  onClick={retryNow}
+                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-mono tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                >
+                  <RefreshCw className="w-4 h-4" /> RÉESSAYER
+                </button>
               </div>
             )}
 
@@ -564,6 +761,64 @@ export function PlayerView({
                   </div>
                   
                   <div className="flex-1" />
+
+                  <div ref={tracksMenuRef} className="flex items-center gap-4">
+                    {subtitleTracks.length > 0 && (
+                      <div className="relative">
+                        <button
+                          onClick={() => setTracksMenuOpen(tracksMenuOpen === 'subtitles' ? null : 'subtitles')}
+                          className={`hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded ${activeSubtitleId !== -1 ? 'text-indigo-400' : 'text-white'}`}
+                          title="Sous-titres"
+                        >
+                          <Captions className="w-5 h-5" />
+                        </button>
+                        {tracksMenuOpen === 'subtitles' && (
+                          <div className="absolute bottom-8 right-0 bg-slate-900 border border-slate-700 rounded-lg py-1 w-44 text-xs font-mono z-30 shadow-lg max-h-52 overflow-y-auto">
+                            <button
+                              onClick={() => selectSubtitle(-1)}
+                              className={`w-full text-left px-3 py-2 hover:bg-slate-800 ${activeSubtitleId === -1 ? 'text-indigo-400' : 'text-slate-300'}`}
+                            >
+                              Désactivé
+                            </button>
+                            {subtitleTracks.map(t => (
+                              <button
+                                key={t.id}
+                                onClick={() => selectSubtitle(t.id)}
+                                className={`w-full text-left px-3 py-2 hover:bg-slate-800 truncate ${activeSubtitleId === t.id ? 'text-indigo-400' : 'text-slate-300'}`}
+                              >
+                                {t.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {audioTracks.length > 1 && (
+                      <div className="relative">
+                        <button
+                          onClick={() => setTracksMenuOpen(tracksMenuOpen === 'audio' ? null : 'audio')}
+                          className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded"
+                          title="Piste audio"
+                        >
+                          <Languages className="w-5 h-5" />
+                        </button>
+                        {tracksMenuOpen === 'audio' && (
+                          <div className="absolute bottom-8 right-0 bg-slate-900 border border-slate-700 rounded-lg py-1 w-44 text-xs font-mono z-30 shadow-lg max-h-52 overflow-y-auto">
+                            {audioTracks.map(t => (
+                              <button
+                                key={t.id}
+                                onClick={() => selectAudioTrack(t.id)}
+                                className={`w-full text-left px-3 py-2 hover:bg-slate-800 truncate ${activeAudioId === t.id ? 'text-indigo-400' : 'text-slate-300'}`}
+                              >
+                                {t.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   
                   <button onClick={toggleResize} className="text-xs font-mono font-bold tracking-widest text-slate-300 hover:text-white px-2 py-1 bg-white/10 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
                     {activeSource ? resizeLabels[activeSource.resizeMode] : 'AJUSTER'}
