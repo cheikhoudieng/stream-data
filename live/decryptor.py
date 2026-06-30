@@ -38,7 +38,7 @@ HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "Accept-Encoding": "gzip, deflate",
 }
-OUT_DIR = "cricfy_output"
+OUT_DIR = "output"
 
 # ═══════════════════════════════════════════════════════════════════
 # 2. MOTEURS DE DÉCHIFFREMENT
