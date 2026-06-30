@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lecteur.mux — Lecteur vidéo multi-format</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0d10;
+    --panel:#12161b;
+    --panel-alt:#171c22;
+    --border:#232a32;
+    --text:#e7eaee;
+    --text-dim:#8a93a0;
+    --text-faint:#5b6470;
+    --accent:#2dd4bf;
+    --accent-dim:#1a3733;
+    --amber:#f2a65a;
+    --amber-dim:#3a2c18;
+    --danger:#f2545b;
+    --danger-dim:#3a1a1c;
+    --radius:10px;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+    --sans:'Space Grotesk', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at top left, rgba(45,212,191,0.05), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+  ::selection{background:var(--accent-dim);color:var(--accent);}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  code{font-family:var(--mono);background:var(--panel-alt);padding:1px 5px;border-radius:4px;font-size:0.85em;color:var(--accent);}
+
+  .app{max-width:1320px;margin:0 auto;padding:20px 20px 48px;}
+
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 4px 22px;border-bottom:1px solid var(--border);margin-bottom:22px;
+    flex-wrap:wrap;gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:600;letter-spacing:-0.01em;}
+  .brand-mark{
+    width:30px;height:30px;border-radius:7px;background:linear-gradient(155deg,var(--accent),#0e7c70);
+    display:flex;align-items:center;justify-content:center;color:#06201c;font-size:15px;font-weight:700;
+  }
+  .brand b{color:var(--accent);font-weight:600;}
+  .status-cluster{display:flex;gap:8px;flex-wrap:wrap;}
+  .badge{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;
+    padding:6px 10px;border-radius:6px;background:var(--panel);border:1px solid var(--border);
+    color:var(--text-dim);display:flex;align-items:center;gap:6px;
+  }
+  .badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--text-faint);}
+  .badge.led-accent::before{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+  .badge.led-amber::before{background:var(--amber);box-shadow:0 0 6px var(--amber);}
+  .badge.led-danger::before{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+  .badge.led-accent{color:var(--accent);border-color:var(--accent-dim);}
+  .badge.led-amber{color:var(--amber);border-color:var(--amber-dim);}
+  .badge.led-danger{color:var(--danger);border-color:var(--danger-dim);}
+
+  .layout{display:grid;grid-template-columns:1.65fr 1fr;gap:22px;align-items:start;}
+  @media (max-width:920px){.layout{grid-template-columns:1fr;}}
+
+  /* ---- Player ---- */
+  .player-frame{
+    position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius);
+    overflow:hidden;border:1px solid var(--border);
+  }
+  video{width:100%;height:100%;object-fit:contain;display:block;background:#000;}
+
+  .gesture-layer{position:absolute;inset:0;}
+
+  .spinner{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(10,13,16,0.35);opacity:0;pointer-events:none;transition:opacity .15s ease;
+  }
+  .spinner.show{opacity:1;}
+  .spinner-ring{
+    width:38px;height:38px;border-radius:50%;border:3px solid rgba(45,212,191,0.18);
+    border-top-color:var(--accent);animation:spin 0.8s linear infinite;
+  }
+  @media (prefers-reduced-motion:reduce){.spinner-ring{animation-duration:2.4s;}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .controls{
+    position:absolute;left:0;right:0;bottom:0;padding:10px 12px 12px;
+    background:linear-gradient(to top, rgba(0,0,0,0.82), rgba(0,0,0,0.45) 70%, transparent);
+    opacity:1;transition:opacity .2s ease;
+  }
+  .timeline{
+    position:relative;height:5px;border-radius:3px;background:rgba(255,255,255,0.14);
+    margin-bottom:10px;cursor:pointer;
+  }
+  .timeline-buffered{position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(255,255,255,0.28);border-radius:3px;}
+  .timeline-progress{position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--accent);border-radius:3px;}
+  .timeline-scrub{
+    position:absolute;top:50%;left:0%;width:12px;height:12px;border-radius:50%;background:var(--accent);
+    transform:translate(-50%,-50%);box-shadow:0 0 0 3px rgba(45,212,191,0.2);
+  }
+  .controls-row{display:flex;align-items:center;gap:6px;}
+  .ctrl-btn{
+    background:transparent;border:none;color:var(--text);font-size:15px;cursor:pointer;
+    width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--sans);transition:background .12s ease;
+  }
+  .ctrl-btn:hover{background:rgba(255,255,255,0.08);}
+  #resizeBtn{width:auto;padding:0 10px;font-family:var(--mono);font-size:10px;letter-spacing:0.05em;}
+  .time{font-family:var(--mono);font-size:12px;color:var(--text-dim);white-space:nowrap;}
+  .spacer{flex:1;}
+
+  .unlock-btn{
+    position:absolute;bottom:14px;right:14px;background:rgba(0,0,0,0.55);color:var(--amber);
+    border:1px solid rgba(242,166,90,0.4);border-radius:7px;padding:8px 12px;font-family:var(--mono);
+    font-size:11px;cursor:pointer;letter-spacing:0.04em;
+  }
+
+  /* ---- Playlist ---- */
+  .playlist{display:flex;gap:8px;overflow-x:auto;margin-top:14px;padding-bottom:4px;}
+  .playlist-empty{
+    font-family:var(--mono);font-size:12px;color:var(--text-faint);padding:14px 4px;
+  }
+  .playlist-item{
+    flex:0 0 auto;min-width:160px;background:var(--panel);border:1px solid var(--border);
+    border-radius:8px;padding:9px 11px;cursor:pointer;position:relative;transition:border-color .12s ease;
+  }
+  .playlist-item:hover{border-color:var(--text-faint);}
+  .playlist-item.active{border-color:var(--accent);background:var(--accent-dim);}
+  .pl-label{display:block;font-size:13px;font-weight:600;margin-bottom:3px;padding-right:16px;}
+  .pl-meta{display:block;font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:0.04em;}
+  .playlist-item.active .pl-meta{color:var(--accent);}
+  .pl-remove{
+    position:absolute;top:7px;right:7px;background:none;border:none;color:var(--text-faint);
+    cursor:pointer;font-size:14px;line-height:1;width:18px;height:18px;
+  }
+  .pl-remove:hover{color:var(--danger);}
+
+  /* ---- Log panel ---- */
+  .log-panel{margin-top:16px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .log-head{
+    font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-faint);padding:9px 13px;border-bottom:1px solid var(--border);
+  }
+  .log-body{max-height:140px;overflow-y:auto;padding:8px 13px;font-family:var(--mono);font-size:11.5px;}
+  .log-line{padding:3px 0;color:var(--text-dim);border-bottom:1px dashed rgba(255,255,255,0.04);}
+  .log-line.log-warn{color:var(--amber);}
+  .log-line.log-error{color:var(--danger);}
+  .log-line.log-ok{color:var(--accent);}
+
+  /* ---- Config column ---- */
+  .config-col{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text-dim);
+    letter-spacing:0.01em;
+  }
+  .field input[type="text"], .field select, .field textarea{
+    width:100%;background:var(--panel-alt);border:1px solid var(--border);border-radius:7px;
+    color:var(--text);padding:9px 10px;font-family:var(--mono);font-size:12.5px;resize:vertical;
+  }
+  .field select{font-family:var(--sans);font-size:13px;appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a93a0'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 11px center;padding-right:28px;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--accent);}
+  .hint{font-size:11px;color:var(--text-faint);margin:6px 2px 0;line-height:1.5;}
+  .primary-btn{
+    width:100%;background:var(--accent);color:#06201c;border:none;border-radius:8px;
+    padding:11px;font-family:var(--sans);font-weight:600;font-size:13.5px;cursor:pointer;
+    transition:filter .12s ease;
+  }
+  .primary-btn:hover{filter:brightness(1.08);}
+  fieldset{border:none;padding:0;margin:0 0 8px;}
+  .section-label{
+    font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;
+    color:var(--text-faint);margin:0 0 12px;padding-top:4px;border-top:1px solid var(--border);
+    padding-top:14px;
+  }
+  .section-label:first-child{border-top:none;padding-top:0;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark">▣</span><span>lecteur<b>.mux</b></span></div>
+    <div class="status-cluster">
+      <span class="badge" id="formatBadge">FORMAT —</span>
+      <span class="badge" id="drmBadge">DRM —</span>
+      <span class="badge" id="stateBadge">ARRÊTÉ</span>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <section class="player-col">
+      <div class="player-frame" id="playerFrame">
+        <video id="video" playsinline></video>
+        <div class="spinner" id="spinner"><div class="spinner-ring"></div></div>
+        <div class="gesture-layer" id="gestureLayer"></div>
+
+        <div class="controls" id="controls">
+          <div class="timeline" id="timeline">
+            <div class="timeline-buffered" id="bufferedBar"></div>
+            <div class="timeline-progress" id="progressBar"></div>
+            <div class="timeline-scrub" id="scrubHandle"></div>
+          </div>
+          <div class="controls-row">
+            <button class="ctrl-btn" id="playBtn" title="Lecture / Pause">▶</button>
+            <button class="ctrl-btn" id="muteBtn" title="Couper le son">🔊</button>
+            <span class="time" id="timeDisplay">00:00 / 00:00</span>
+            <span class="spacer"></span>
+            <button class="ctrl-btn" id="resizeBtn" title="Mode d'affichage">AJUSTER</button>
+            <button class="ctrl-btn" id="pipBtn" title="Picture-in-Picture">⧉</button>
+            <button class="ctrl-btn" id="lockBtn" title="Verrouiller les contrôles">🔓</button>
+            <button class="ctrl-btn" id="fsBtn" title="Plein écran">⛶</button>
+          </div>
+        </div>
+
+        <button class="unlock-btn" id="unlockBtn" hidden>🔒 Déverrouiller</button>
+      </div>
+
+      <div class="playlist" id="playlist">
+        <div class="playlist-empty" id="playlistEmpty">Aucune source — configurez-en une à droite, puis « Ajouter et lire ».</div>
+      </div>
+
+      <div class="log-panel">
+        <div class="log-head">Journal</div>
+        <div class="log-body" id="logBody"></div>
+      </div>
+    </section>
+
+    <aside class="config-col">
+      <form id="configForm">
+
+        <p class="section-label">Source</p>
+        <div class="field">
+          <label for="srcUrl">URL de la vidéo</label>
+          <input type="text" id="srcUrl" placeholder="https://exemple.com/stream.m3u8" required>
+        </div>
+        <div class="field">
+          <label for="formatSelect">Format</label>
+          <select id="formatSelect">
+            <option value="auto">Auto-détection (extension)</option>
+            <option value="hls">HLS (.m3u8)</option>
+            <option value="dash">DASH (.mpd)</option>
+            <option value="progressive">Progressif (MP4 / WebM)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="labelInput">Nom dans la playlist</label>
+          <input type="text" id="labelInput" placeholder="Source 1 — 1080p">
+        </div>
+
+        <p class="section-label">Protection DRM</p>
+        <div class="field">
+          <label for="drmSelect">Schéma</label>
+          <select id="drmSelect">
+            <option value="none">Aucun</option>
+            <option value="clearkey">ClearKey</option>
+            <option value="widevine">Widevine</option>
+            <option value="playready">PlayReady</option>
+          </select>
+        </div>
+        <div class="field" id="licenseField" hidden>
+          <label for="licenseUrl">URL du serveur de licence</label>
+          <input type="text" id="licenseUrl" placeholder="https://exemple.com/license">
+        </div>
+        <div class="field" id="clearkeyField" hidden>
+          <label for="clearkeyInput">Clés ClearKey — une par ligne : <code>keyId:key</code> (hex)</label>
+          <textarea id="clearkeyInput" rows="2" placeholder="1ab2c3...:9fe0d4..."></textarea>
+          <p class="hint">Utilisées directement si renseignées ; sinon la requête passe par l'URL de licence ci-dessus.</p>
+        </div>
+
+        <p class="section-label">Requêtes réseau</p>
+        <div class="field">
+          <label for="headersInput">En-têtes HTTP — un par ligne : <code>Nom: valeur</code></label>
+          <textarea id="headersInput" rows="3" placeholder="Authorization: Bearer ...&#10;X-Custom: valeur"></textarea>
+          <p class="hint">Un navigateur interdit la modification en JS de <code>User-Agent</code>, <code>Referer</code>, <code>Cookie</code>, <code>Host</code> et autres en-têtes réservés — ils seront ignorés et signalés dans le journal.</p>
+        </div>
+
+        <p class="section-label">Affichage</p>
+        <div class="field">
+          <label for="resizeSelect">Mode</label>
+          <select id="resizeSelect">
+            <option value="contain">Ajuster — image entière (contain)</option>
+            <option value="cover">Zoom — recadrage (cover)</option>
+            <option value="fill">Remplir — étirement (fill)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="primary-btn">+ Ajouter et lire</button>
+      </form>
+    </aside>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.1/shaka-player.compiled.js"></script>
+<script>
+(() => {
+  // ---------- Éléments ----------
+  const video = document.getElementById('video');
+  const playerFrame = document.getElementById('playerFrame');
+  const spinner = document.getElementById('spinner');
+  const controls = document.getElementById('controls');
+  const timeline = document.getElementById('timeline');
+  const bufferedBar = document.getElementById('bufferedBar');
+  const progressBar = document.getElementById('progressBar');
+  const scrubHandle = document.getElementById('scrubHandle');
+  const playBtn = document.getElementById('playBtn');
+  const muteBtn = document.getElementById('muteBtn');
+  const timeDisplay = document.getElementById('timeDisplay');
+  const resizeBtn = document.getElementById('resizeBtn');
+  const pipBtn = document.getElementById('pipBtn');
+  const lockBtn = document.getElementById('lockBtn');
+  const fsBtn = document.getElementById('fsBtn');
+  const unlockBtn = document.getElementById('unlockBtn');
+
+  const playlistEl = document.getElementById('playlist');
+  const playlistEmpty = document.getElementById('playlistEmpty');
+  const logBody = document.getElementById('logBody');
+  const formatBadge = document.getElementById('formatBadge');
+  const drmBadge = document.getElementById('drmBadge');
+  const stateBadge = document.getElementById('stateBadge');
+
+  const form = document.getElementById('configForm');
+  const srcUrl = document.getElementById('srcUrl');
+  const formatSelect = document.getElementById('formatSelect');
+  const drmSelect = document.getElementById('drmSelect');
+  const licenseField = document.getElementById('licenseField');
+  const licenseUrl = document.getElementById('licenseUrl');
+  const clearkeyField = document.getElementById('clearkeyField');
+  const clearkeyInput = document.getElementById('clearkeyInput');
+  const headersInput = document.getElementById('headersInput');
+  const resizeSelect = document.getElementById('resizeSelect');
+  const labelInput = document.getElementById('labelInput');
+
+  // ---------- État ----------
+  let sources = [];
+  let activeIndex = -1;
+  let hls = null;
+  let dashPlayer = null;
+  let locked = false;
+  let scrubbing = false;
+  const resizeModes = ['contain', 'cover', 'fill'];
+  const resizeLabels = { contain: 'AJUSTER', cover: 'ZOOM', fill: 'REMPLIR' };
+
+  const FORBIDDEN_HEADERS = ['user-agent','referer','cookie','host','origin','content-length',
+    'connection','via','accept-charset','accept-encoding','date','dnt','expect','keep-alive',
+    'trailer','transfer-encoding','upgrade'];
+
+  // ---------- Utilitaires ----------
+  function log(msg, level = 'info') {
+    const line = document.createElement('div');
+    line.className = 'log-line log-' + level;
+    const t = new Date().toLocaleTimeString('fr-FR');
+    line.textContent = `[${t}] ${msg}`;
+    logBody.prepend(line);
+  }
+
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function fmtTime(s) {
+    if (!isFinite(s) || s < 0) s = 0;
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = Math.floor(s % 60);
+    const pad = n => String(n).padStart(2, '0');
+    return h > 0 ? `${pad(h)}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+  }
+
+  function setState(label, kind) {
+    stateBadge.textContent = label;
+    stateBadge.className = 'badge' + (kind ? ' ' + kind : '');
+  }
+
+  function detectFormat(url, override) {
+    if (override && override !== 'auto') return override;
+    const clean = url.split('?')[0].split('#')[0].toLowerCase();
+    if (clean.endsWith('.m3u8')) return 'hls';
+    if (clean.endsWith('.mpd')) return 'dash';
+    return 'progressive';
+  }
+
+  function parseHeaders(text) {
+    const out = {};
+    const ignored = [];
+    (text || '').split('\n').forEach(line => {
+      const idx = line.indexOf(':');
+      if (idx < 0) return;
+      const name = line.slice(0, idx).trim();
+      const value = line.slice(idx + 1).trim();
+      if (!name) return;
+      if (FORBIDDEN_HEADERS.includes(name.toLowerCase())) { ignored.push(name); return; }
+      out[name] = value;
+    });
+    if (ignored.length) log('En-têtes ignorés (protégés par le navigateur) : ' + ignored.join(', '), 'warn');
+    return out;
+  }
+
+  function hexToBase64Url(hex) {
+    hex = hex.replace(/\s+/g, '');
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+    let bin = '';
+    bytes.forEach(b => bin += String.fromCharCode(b));
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function parseClearkeyLines(text) {
+    return (text || '').split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+      const [kid, k] = line.split(':').map(s => s.trim());
+      return { kid, k };
+    }).filter(p => p.kid && p.k);
+  }
+
+  // ---------- Configuration DRM (formulaire) ----------
+  drmSelect.addEventListener('change', updateDrmFields);
+  function updateDrmFields() {
+    const v = drmSelect.value;
+    licenseField.hidden = v === 'none';
+    clearkeyField.hidden = v !== 'clearkey';
+  }
+  updateDrmFields();
+
+  // ---------- Construction des données de protection (DASH) ----------
+  // ---------- Construction des données de protection (DASH) ----------
+  function buildProtectionData(drmType, license, headers, clearkeysText) {
+    const systemMap = { clearkey: 'org.w3.clearkey', widevine: 'com.widevine.alpha', playready: 'com.microsoft.playready' };
+    const system = systemMap[drmType];
+    if (!system) return null;
+    const entry = {};
+    if (drmType === 'clearkey' && clearkeysText && clearkeysText.trim()) {
+      const clearkeys = {};
+      parseClearkeyLines(clearkeysText).forEach(p => { 
+        // CORRECTION ICI : Dash.js exige du Base64Url, on convertit donc le Hex saisi par l'utilisateur
+        clearkeys[hexToBase64Url(p.kid)] = hexToBase64Url(p.k); 
+      });
+      if (Object.keys(clearkeys).length) entry.clearkeys = clearkeys;
+    }
+    if (!entry.clearkeys) {
+      if (!license) return null;
+      entry.serverURL = license;
+      if (headers && Object.keys(headers).length) entry.httpRequestHeaders = headers;
+    }
+    return { [system]: entry };
+  }
+
+  // ---------- ClearKey natif (contenu progressif) ----------
+  async function setupNativeClearKey(videoEl, clearkeysText) {
+    const pairs = parseClearkeyLines(clearkeysText);
+    if (!pairs.length) { log('Aucune clé ClearKey valide fournie.', 'warn'); return; }
+    if (!navigator.requestMediaKeySystemAccess) { log('EME non disponible dans ce navigateur.', 'error'); return; }
+    try {
+      const config = [{
+        initDataTypes: ['cenc', 'keyids'],
+        videoCapabilities: [{ contentType: 'video/mp4; codecs="avc1.42E01E"' }],
+        audioCapabilities: [{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }]
+      }];
+      const access = await navigator.requestMediaKeySystemAccess('org.w3.clearkey', config);
+      const mediaKeys = await access.createMediaKeys();
+      await videoEl.setMediaKeys(mediaKeys);
+      videoEl.addEventListener('encrypted', async (e) => {
+        try {
+          const session = mediaKeys.createSession();
+          session.addEventListener('message', async () => {
+            const keysObj = {
+              keys: pairs.map(p => ({ kty: 'oct', k: hexToBase64Url(p.k), kid: hexToBase64Url(p.kid) })),
+              type: 'temporary'
+            };
+            await session.update(new TextEncoder().encode(JSON.stringify(keysObj)));
+            log('Clés ClearKey injectées dans la session EME.', 'ok');
+          }, { once: true });
+          await session.generateRequest(e.initDataType, e.initData);
+        } catch (err) { log('Erreur de session EME : ' + err.message, 'error'); }
+      }, { once: true });
+      log('ClearKey natif initialisé (EME).', 'ok');
+    } catch (err) {
+      log('Échec de l\'initialisation ClearKey : ' + err.message, 'error');
+    }
+  }
+
+  // ---------- Nettoyage avant chargement d'une nouvelle source ----------
+  function destroyEngines() {
+    if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
+    if (dashPlayer) { try { dashPlayer.reset(); } catch (e) {} dashPlayer = null; }
+    try { video.pause(); } catch (e) {}
+    video.removeAttribute('src');
+    while (video.firstChild) video.removeChild(video.firstChild);
+    video.load();
+  }
+
+  // ---------- Chargement d'une source ----------
+  function loadSource(idx) {
+    const source = sources[idx];
+    if (!source) return;
+    activeIndex = idx;
+    renderPlaylist();
+    destroyEngines();
+    spinner.classList.add('show');
+    setState('CHARGEMENT', 'led-amber');
+
+    formatBadge.textContent = 'FORMAT ' + source.format.toUpperCase();
+    formatBadge.className = 'badge led-accent';
+    if (source.drmType === 'none') {
+      drmBadge.textContent = 'CLAIR';
+      drmBadge.className = 'badge';
+    } else {
+      drmBadge.textContent = 'DRM ' + source.drmType.toUpperCase();
+      drmBadge.className = 'badge led-amber';
+    }
+
+    video.style.objectFit = source.resizeMode;
+    resizeBtn.textContent = resizeLabels[source.resizeMode];
+
+    const headers = source.headers;
+
+    if (source.format === 'hls') {
+      if (window.Hls && Hls.isSupported()) {
+        const hlsConfig = {
+          // Injection des headers (ceux autorisés par le navigateur)
+          xhrSetup: (xhr, url) => { 
+            Object.entries(headers).forEach(([k, v]) => { try { xhr.setRequestHeader(k, v); } catch(e){} }); 
+          }
+        };
+
+        // GESTION DES DRM POUR HLS
+        if (source.drmType !== 'none' && source.licenseUrl) {
+          hlsConfig.emeEnabled = true; // INDISPENSABLE POUR LES DRM
+          const sysMap = { widevine: 'com.widevine.alpha', playready: 'com.microsoft.playready', clearkey: 'org.w3.clearkey' };
+          hlsConfig.drmSystems = {
+            [sysMap[source.drmType]]: { licenseUrl: source.licenseUrl }
+          };
+          log('Configuration DRM HLS (EME) activée.', 'ok');
+        }
+
+        hls = new Hls(hlsConfig);
+        hls.on(Hls.Events.ERROR, (evt, data) => {
+          if (data.fatal) { 
+            log('Erreur HLS fatale : ' + data.type + ' — ' + data.details, 'error'); 
+            setState('ERREUR', 'led-danger'); 
+          }
+        });
+        hls.loadSource(source.url);
+        hls.attachMedia(video);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = source.url;
+        log('Lecture HLS native (Safari Apple).', 'ok');
+      } else {
+        log('HLS non supporté par ce navigateur.', 'error');
+        setState('ERREUR', 'led-danger');
+      }
+      attemptPlay();
+    } else if (source.format === 'dash') {
+      // Nettoyer l'ancien lecteur Shaka s'il existe
+      if (window.shakaInstance) { window.shakaInstance.destroy(); }
+      
+      shaka.polyfill.installAll();
+      if (!shaka.Player.isBrowserSupported()) {
+        log('Navigateur non supporté par Shaka Player', 'error');
+        return;
+      }
+
+      const player = new shaka.Player(video);
+      window.shakaInstance = player;
+
+      // 1. Injection des Headers (CORS / User-Agent / Referer)
+      player.getNetworkingEngine().registerRequestFilter((type, request) => {
+        if (Object.keys(headers).length) {
+          Object.assign(request.headers, headers);
+        }
+      });
+
+      player.addEventListener('error', (e) => {
+        log('Erreur Shaka : ' + e.detail.code, 'error');
+        setState('ERREUR', 'led-danger');
+      });
+
+      // 2. Configuration des DRM
+      const shakaConfig = {};
+      if (source.drmType === 'clearkey' && source.clearkeys) {
+        const clearKeysMap = {};
+        parseClearkeyLines(source.clearkeys).forEach(p => {
+          clearKeysMap[p.kid] = p.k;
+        });
+
+        shakaConfig.drm = {
+          clearKeys: clearKeysMap
+        };
+        
+        // LA MAGIE EST ICI : On force Shaka à ignorer les DRM déclarés dans le .mpd
+        // pour qu'il utilise exclusivement nos clés ClearKey locales sans broncher.
+        shakaConfig.manifest = {
+          dash: {
+            ignoreDrmInfo: true
+          }
+        };
+
+        log('Forçage des clés ClearKey (ignoreDrmInfo activé).', 'ok');
+      } 
+      else if (source.drmType !== 'none' && source.licenseUrl) {
+        const sysMap = { widevine: 'com.widevine.alpha', playready: 'com.microsoft.playready' };
+        shakaConfig.drm = { servers: { [sysMap[source.drmType]]: source.licenseUrl } };
+      }
+
+      player.configure(shakaConfig);
+
+      // 3. Lancement du flux
+      player.load(source.url).then(() => {
+        log('DASH chargé avec succès.', 'ok');
+        attemptPlay();
+      }).catch(e => {
+        log('Erreur de chargement DASH : ' + e.message, 'error');
+      });
+
+    } else  {
+      // progressif (mp4 / webm)
+      if (source.drmType === 'clearkey' && source.clearkeys) {
+        setupNativeClearKey(video, source.clearkeys).then(() => {
+          video.src = source.url;
+          attemptPlay();
+        });
+      } else {
+        if (source.drmType === 'widevine' || source.drmType === 'playready') {
+          log(source.drmType.toUpperCase() + ' nécessite en pratique un manifeste HLS ou DASH : non géré ici en mode progressif.', 'warn');
+        }
+        video.src = source.url;
+        attemptPlay();
+      }
+    }
+  }
+
+  function attemptPlay() {
+    video.play().catch(() => {
+      log('Lecture automatique bloquée par le navigateur — cliquez sur lecture.', 'warn');
+      spinner.classList.remove('show');
+    });
+  }
+
+  // ---------- Playlist ----------
+  function renderPlaylist() {
+    playlistEmpty.hidden = sources.length > 0;
+    [...playlistEl.querySelectorAll('.playlist-item')].forEach(n => n.remove());
+    sources.forEach((s, i) => {
+      const item = document.createElement('div');
+      item.className = 'playlist-item' + (i === activeIndex ? ' active' : '');
+      item.innerHTML =
+        `<span class="pl-label">${escapeHtml(s.label || ('Source ' + (i + 1)))}</span>
+         <span class="pl-meta">${s.format.toUpperCase()}${s.drmType !== 'none' ? ' · ' + s.drmType.toUpperCase() : ''}</span>
+         <button class="pl-remove" title="Retirer" type="button">×</button>`;
+      item.addEventListener('click', (e) => { if (!e.target.classList.contains('pl-remove')) loadSource(i); });
+      item.querySelector('.pl-remove').addEventListener('click', (e) => { e.stopPropagation(); removeSource(i); });
+      playlistEl.appendChild(item);
+    });
+  }
+
+  function removeSource(i) {
+    sources.splice(i, 1);
+    if (activeIndex === i) { destroyEngines(); activeIndex = -1; setState('ARRÊTÉ', ''); formatBadge.textContent = 'FORMAT —'; formatBadge.className = 'badge'; drmBadge.textContent = 'DRM —'; drmBadge.className = 'badge'; }
+    else if (activeIndex > i) activeIndex--;
+    renderPlaylist();
+  }
+
+  // ---------- Formulaire ----------
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const url = srcUrl.value.trim();
+    if (!url) return;
+    const source = {
+      url,
+      format: detectFormat(url, formatSelect.value),
+      drmType: drmSelect.value,
+      licenseUrl: licenseUrl.value.trim(),
+      clearkeys: clearkeyInput.value,
+      headers: parseHeaders(headersInput.value),
+      resizeMode: resizeSelect.value,
+      label: labelInput.value.trim()
+    };
+    sources.push(source);
+    renderPlaylist();
+    loadSource(sources.length - 1);
+    labelInput.value = '';
+  });
+
+  // ---------- Contrôles lecteur ----------
+  playBtn.addEventListener('click', () => { video.paused ? video.play() : video.pause(); });
+  video.addEventListener('play', () => { playBtn.textContent = '⏸'; setState('LECTURE', 'led-accent'); });
+  video.addEventListener('pause', () => { playBtn.textContent = '▶'; setState('PAUSE', ''); });
+  video.addEventListener('ended', () => setState('TERMINÉ', ''));
+  video.addEventListener('waiting', () => spinner.classList.add('show'));
+  video.addEventListener('loadstart', () => spinner.classList.add('show'));
+  video.addEventListener('playing', () => spinner.classList.remove('show'));
+  video.addEventListener('canplay', () => spinner.classList.remove('show'));
+  video.addEventListener('error', () => {
+    const err = video.error;
+    log('Erreur média' + (err ? ' (code ' + err.code + ')' : ''), 'error');
+    setState('ERREUR', 'led-danger');
+    spinner.classList.remove('show');
+  });
+
+  muteBtn.addEventListener('click', () => {
+    video.muted = !video.muted;
+    if (!video.muted && video.volume === 0) video.volume = 1;
+    muteBtn.textContent = video.muted ? '🔇' : '🔊';
+  });
+
+  resizeBtn.addEventListener('click', () => {
+    const current = resizeModes.indexOf(video.style.objectFit || 'contain');
+    const next = resizeModes[(current + 1) % resizeModes.length];
+    video.style.objectFit = next;
+    resizeBtn.textContent = resizeLabels[next];
+    if (sources[activeIndex]) sources[activeIndex].resizeMode = next;
+  });
+
+  fsBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) playerFrame.requestFullscreen().catch(err => log('Plein écran indisponible : ' + err.message, 'warn'));
+    else document.exitFullscreen();
+  });
+
+  pipBtn.addEventListener('click', () => {
+    if (document.pictureInPictureElement) document.exitPictureInPicture();
+    else if (video.requestPictureInPicture) video.requestPictureInPicture().catch(err => log('PiP indisponible : ' + err.message, 'warn'));
+    else log('Picture-in-Picture non supporté par ce navigateur.', 'warn');
+  });
+
+  lockBtn.addEventListener('click', () => {
+    locked = true;
+    controls.style.display = 'none';
+    unlockBtn.hidden = false;
+  });
+  unlockBtn.addEventListener('click', () => {
+    locked = false;
+    controls.style.display = '';
+    unlockBtn.hidden = true;
+  });
+
+  // ---------- Timeline ----------
+  function seekFromEvent(e) {
+    const rect = timeline.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const ratio = Math.min(1, Math.max(0, x / rect.width));
+    if (video.duration) video.currentTime = ratio * video.duration;
+  }
+  timeline.addEventListener('mousedown', e => { scrubbing = true; seekFromEvent(e); });
+  timeline.addEventListener('touchstart', e => { scrubbing = true; seekFromEvent(e); }, { passive: true });
+  window.addEventListener('mousemove', e => { if (scrubbing) seekFromEvent(e); });
+  window.addEventListener('touchmove', e => { if (scrubbing) seekFromEvent(e); }, { passive: true });
+  window.addEventListener('mouseup', () => scrubbing = false);
+  window.addEventListener('touchend', () => scrubbing = false);
+
+  video.addEventListener('timeupdate', () => {
+    if (!video.duration) return;
+    const pct = (video.currentTime / video.duration) * 100;
+    progressBar.style.width = pct + '%';
+    scrubHandle.style.left = pct + '%';
+    timeDisplay.textContent = `${fmtTime(video.currentTime)} / ${fmtTime(video.duration)}`;
+  });
+  video.addEventListener('progress', () => {
+    if (!video.duration || !video.buffered.length) return;
+    const end = video.buffered.end(video.buffered.length - 1);
+    bufferedBar.style.width = (end / video.duration) * 100 + '%';
+  });
+
+  // ---------- Raccourcis clavier ----------
+  document.addEventListener('keydown', (e) => {
+    if (locked) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.code === 'Space') { e.preventDefault(); video.paused ? video.play() : video.pause(); }
+    if (e.key === 'f') fsBtn.click();
+    if (e.key === 'm') muteBtn.click();
+    if (e.key === 'ArrowRight') video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+    if (e.key === 'ArrowLeft') video.currentTime = Math.max(0, video.currentTime - 10);
+  });
+
+  log('Lecteur prêt — configurez une source pour commencer.');
+})();
+</script>
+</body>
+</html>
