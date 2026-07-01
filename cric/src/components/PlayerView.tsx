@@ -555,23 +555,50 @@ export function PlayerView({
       const player = new shaka.Player(videoRef.current!);
       shakaRef.current = player;
 
-      // Referer/User-Agent/Cookie/Origin are "forbidden request headers" —
-      // Shaka's HTTP plugins ultimately call fetch()/XHR under the hood, so
-      // assigning them to request.headers here is silently dropped by the
-      // browser just like it would be for hls.js. The only way to apply
-      // them is server-side, so instead we rewrite the already-resolved
-      // request URI (placeholders like $Number$ are substituted by Shaka
-      // *before* this filter runs) to go through our proxy.
+      // Referer/User-Agent/Cookie/Origin sont des "forbidden request headers" —
+      // Shaka appelle fetch()/XHR en interne, donc les assigner à
+      // request.headers ici serait silencieusement ignoré par le navigateur,
+      // exactement comme pour hls.js. La seule solution est de réécrire l'URI
+      // déjà résolue (placeholders $Number$ etc. déjà substitués par Shaka
+      // avant que ce filtre ne s'exécute) pour passer par notre proxy.
       //
-      // Scoped to MANIFEST/SEGMENT only — LICENSE requests are POSTs with a
-      // binary DRM challenge body that our GET-only proxy can't relay.
+      // Limité à MANIFEST/SEGMENT — les requêtes LICENSE sont des POST avec
+      // un corps binaire (challenge DRM) que notre proxy GET-only ne peut
+      // pas relayer.
+      //
+      // Piège : Shaka résout les chemins relatifs (<BaseURL>, SegmentTemplate)
+      // d'un MPD contre response.uri de la requête MANIFEST. Comme le
+      // manifeste est en réalité fetché via /api/proxy?url=..., response.uri
+      // pointerait vers le chemin du proxy — cassant toute résolution
+      // relative contre le vrai dossier du CDN. On garde donc une map
+      // proxied → original (uniquement pour les manifestes, pas les
+      // segments, pour ne pas la faire grossir sans borne sur un live) et on
+      // restaure l'URI dans le response filter avant que le parseur DASH de
+      // Shaka ne la lise.
       if (Object.keys(source.headers).length > 0) {
         const NetworkingEngine = shaka.net.NetworkingEngine;
-        player.getNetworkingEngine().registerRequestFilter((type: any, request: any) => {
+        const netEngine = player.getNetworkingEngine();
+        const manifestUriMap = new Map<string, string>();
+
+        netEngine.registerRequestFilter((type: any, request: any) => {
           if (type !== NetworkingEngine.RequestType.MANIFEST && type !== NetworkingEngine.RequestType.SEGMENT) return;
-          request.uris = request.uris.map((uri: string) =>
-            uri.includes('/api/proxy') ? uri : buildProxiedUrl(uri, source.headers)
-          );
+          request.uris = request.uris.map((uri: string) => {
+            if (uri.includes('/api/proxy')) return uri;
+            const proxied = buildProxiedUrl(uri, source.headers);
+            if (type === NetworkingEngine.RequestType.MANIFEST) manifestUriMap.set(proxied, uri);
+            return proxied;
+          });
+        });
+
+        netEngine.registerResponseFilter((type: any, response: any) => {
+          if (type !== NetworkingEngine.RequestType.MANIFEST) return;
+          const original = manifestUriMap.get(response.uri);
+          if (original) {
+            response.uri = original;
+            // Certaines versions de Shaka gardent aussi originalUri séparément
+            // pour la résolution relative — on la met à jour par sécurité.
+            if ('originalUri' in response) response.originalUri = original;
+          }
         });
       }
 
