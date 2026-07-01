@@ -93,6 +93,67 @@ function detectFormat(url: string, override: string) {
   return 'progressive';
 }
 
+const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+// A subset of Referer/User-Agent/Cookie/Origin cannot be set by browser JS
+// at all (Fetch spec "forbidden request headers") — trying to set them via
+// hls.js xhrSetup or Shaka's request filter is silently ignored. The only
+// way to apply them is server-side, via our /api/proxy function.
+const BROWSER_FORBIDDEN_HEADERS = ['user-agent', 'referer', 'cookie', 'origin', 'host'];
+
+interface ParsedLink {
+  url: string;
+  headers: Record<string, string>;
+}
+
+// Mirrors the backend's parse_custom_link(raw_string): splits
+// "https://host/path.m3u8|Referer=https://x.com&User-Agent=Foo&X-Token=abc"
+// into a clean URL plus a headers map. Unknown keys are kept as-is so
+// arbitrary custom headers (tokens, signatures, etc.) also pass through.
+function parseCustomLink(raw: string): ParsedLink {
+  const headers: Record<string, string> = { 'User-Agent': DEFAULT_USER_AGENT };
+  if (!raw) return { url: '', headers };
+
+  const pipeIdx = raw.indexOf('|');
+  if (pipeIdx < 0) return { url: raw.trim(), headers: {} };
+
+  const url = raw.slice(0, pipeIdx).trim();
+  const headersString = raw.slice(pipeIdx + 1).trim();
+
+  headersString.split('&').forEach(pair => {
+    const eqIdx = pair.indexOf('=');
+    if (eqIdx < 0) return;
+    const key = pair.slice(0, eqIdx).trim();
+    const val = pair.slice(eqIdx + 1).trim();
+    if (!key) return;
+    const keyLower = key.toLowerCase();
+    if (keyLower === 'referer' || keyLower === 'referrer') headers['Referer'] = val;
+    else if (keyLower === 'user-agent') headers['User-Agent'] = val;
+    else if (keyLower === 'origin') headers['Origin'] = val;
+    else if (keyLower === 'cookie') headers['Cookie'] = val;
+    else headers[key] = val;
+  });
+
+  return { url, headers };
+}
+
+// UTF-8 safe base64 encoding for header values (accents, etc.) that then
+// gets URL-encoded once more so it survives as a single query param.
+function encodeHeadersParam(headers: Record<string, string>): string {
+  const json = JSON.stringify(headers);
+  const base64 = btoa(unescape(encodeURIComponent(json)));
+  return encodeURIComponent(base64);
+}
+
+// Routes a source through our serverless proxy (/api/proxy.js) so that
+// forbidden headers get applied server-side, and so CORS is guaranteed
+// regardless of whether the origin CDN sends Access-Control-Allow-Origin.
+function buildProxiedUrl(url: string, headers: Record<string, string>): string {
+  const hasHeaders = Object.keys(headers).length > 0;
+  const base = `/api/proxy?url=${encodeURIComponent(url)}`;
+  return hasHeaders ? `${base}&headers=${encodeHeadersParam(headers)}` : base;
+}
+
 // Friendly, non-technical messages for the small set of native
 // HTMLMediaElement error codes — shown to the user instead of "code 3".
 function mediaErrorMessage(code?: number) {
@@ -196,16 +257,42 @@ export function PlayerView({
 
   useEffect(() => {
     if (initialStreams && initialStreams.length > 0) {
-      const parsedSources: Source[] = initialStreams.map((is, idx) => ({
-        url: is.url,
-        format: detectFormat(is.url, is.type || 'auto'),
-        drmType: is.drmType || 'none',
-        licenseUrl: is.licenseUrl || '',
-        clearkeys: is.clearkeys || '',
-        headers: {},
-        resizeMode: 'contain',
-        label: is.name || `Server ${idx + 1}`
-      }));
+      const parsedSources: Source[] = initialStreams.map((is, idx) => {
+        // "https://host/x.m3u8|Referer=...&User-Agent=...&X-Token=..."
+        const { url: cleanUrl, headers: parsedHeaders } = parseCustomLink(is.url);
+        const needsHeaders = Object.keys(parsedHeaders).length > 0;
+        const format = detectFormat(cleanUrl, is.type || 'auto');
+
+        // Referer/User-Agent/Cookie/Origin can never be set from browser JS,
+        // so any link carrying headers must go through the serverless proxy
+        // (which also guarantees CORS regardless of the origin CDN).
+        //
+        // HLS and progressive (single file) sources are proxied wholesale at
+        // the top URL — for HLS the proxy also rewrites every segment/sub
+        // playlist URL inside the manifest text to keep the same headers.
+        //
+        // DASH is different: Shaka resolves <BaseURL>/SegmentTemplate paths
+        // relative to whatever URL it thinks the manifest came from. If we
+        // proxy the top URL, that resolution breaks. Instead we keep the
+        // real URL here and let Shaka's own request filter (set up in
+        // loadSource) rewrite each already-resolved segment/manifest
+        // request through the proxy at fetch time.
+        const shouldProxyTopUrl = needsHeaders && format !== 'dash';
+        const playbackUrl = shouldProxyTopUrl ? buildProxiedUrl(cleanUrl, parsedHeaders) : cleanUrl;
+
+        return {
+          url: playbackUrl,
+          format,
+          drmType: is.drmType || 'none',
+          licenseUrl: is.licenseUrl || '',
+          clearkeys: is.clearkeys || '',
+          // Only DASH still needs headers on the Source: HLS/progressive
+          // already have them baked into the proxied URL above.
+          headers: format === 'dash' ? parsedHeaders : {},
+          resizeMode: 'contain',
+          label: is.name || `Server ${idx + 1}`
+        };
+      });
       
       setSources(parsedSources);
       sourcesRef.current = parsedSources;
@@ -468,11 +555,25 @@ export function PlayerView({
       const player = new shaka.Player(videoRef.current!);
       shakaRef.current = player;
 
-      player.getNetworkingEngine().registerRequestFilter((type: any, request: any) => {
-        if (Object.keys(source.headers).length) {
-          Object.assign(request.headers, source.headers);
-        }
-      });
+      // Referer/User-Agent/Cookie/Origin are "forbidden request headers" —
+      // Shaka's HTTP plugins ultimately call fetch()/XHR under the hood, so
+      // assigning them to request.headers here is silently dropped by the
+      // browser just like it would be for hls.js. The only way to apply
+      // them is server-side, so instead we rewrite the already-resolved
+      // request URI (placeholders like $Number$ are substituted by Shaka
+      // *before* this filter runs) to go through our proxy.
+      //
+      // Scoped to MANIFEST/SEGMENT only — LICENSE requests are POSTs with a
+      // binary DRM challenge body that our GET-only proxy can't relay.
+      if (Object.keys(source.headers).length > 0) {
+        const NetworkingEngine = shaka.net.NetworkingEngine;
+        player.getNetworkingEngine().registerRequestFilter((type: any, request: any) => {
+          if (type !== NetworkingEngine.RequestType.MANIFEST && type !== NetworkingEngine.RequestType.SEGMENT) return;
+          request.uris = request.uris.map((uri: string) =>
+            uri.includes('/api/proxy') ? uri : buildProxiedUrl(uri, source.headers)
+          );
+        });
+      }
 
       player.addEventListener('error', (e: any) => {
         if (!isMountedRef.current) return;
