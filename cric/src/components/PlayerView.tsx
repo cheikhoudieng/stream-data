@@ -49,22 +49,35 @@ interface ProbeResult {
 
 const PROBE_TIMEOUT_MS = 5000;
 const PROBE_FAST_THRESHOLD_MS = 1500;
-
 async function probeSource(source: Source): Promise<ProbeResult> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
   const start = performance.now();
 
+  // Même URL/headers que ce que le vrai player utilisera
+  const probeUrl = source.format === 'dash' && Object.keys(source.headers).length > 0
+    ? buildProxiedUrl(source.url, source.headers)
+    : source.url;
+
+  const tryFetch = (method: 'HEAD' | 'GET') => fetch(probeUrl, {
+    method,
+    signal: controller.signal,
+    cache: 'no-store',
+    headers: method === 'GET' && source.format === 'progressive'
+      ? { Range: 'bytes=0-2047' }
+      : {},
+  });
+
   try {
-    const isProgressive = source.format === 'progressive';
-    const res = await fetch(source.url, {
-      method: 'GET',
-      signal: controller.signal,
-      cache: 'no-store',
-      // Manifestes HLS/DASH sont légers (texte). Pour progressive, on limite
-      // le téléchargement au strict minimum via Range.
-      headers: isProgressive ? { Range: 'bytes=0-2047' } : {},
-    });
+    let res: Response;
+    try {
+      // HEAD : ne télécharge rien, ne consomme pas de token single-use
+      res = await tryFetch('HEAD');
+      if (res.status === 405 || res.status === 501) throw new Error('head-unsupported');
+    } catch {
+      res = await tryFetch('GET');
+    }
+
     const elapsed = performance.now() - start;
     clearTimeout(timeoutId);
     try { res.body?.cancel(); } catch {}
@@ -86,6 +99,7 @@ async function probeSource(source: Source): Promise<ProbeResult> {
 const resizeModes = ['contain', 'cover', 'fill'] as const;
 const resizeLabels = { contain: 'AJUSTER', cover: 'ZOOM', fill: 'REMPLIR' };
 
+const LOAD_TIMEOUT_MS = 12000;
 const MAX_AUTO_RETRIES         = 2;
 const MAX_SOFT_RECOVERIES      = 2;
 const STALL_CHECK_MS           = 3000;
@@ -1054,6 +1068,18 @@ export function PlayerView({
       setServerProbes(prev => ({ ...prev, [idx]: result }));
     });
   }, []);
+
+  useEffect(() => {
+    if (status !== 'CHARGEMENT') return;
+    const timer = setTimeout(() => {
+      if (!isMountedRef.current) return;
+      if (status === 'CHARGEMENT') {
+        addLog('Chargement bloqué trop longtemps — reconnexion.', 'warn');
+        scheduleRetry(activeIndexRef.current);
+      }
+    }, LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [status, addLog, scheduleRetry]);
 
   // ── Scrub / timeline ───────────────────────────────────────────────────────
   const seekFromEvent = useCallback(
