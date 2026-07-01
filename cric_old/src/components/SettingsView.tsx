@@ -9,7 +9,7 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ onFileUpload, onFetchApi, apiUrl, isLoading }: SettingsViewProps) {
-  const [urlInput, setUrlInput] = useState(apiUrl||"https://raw.githubusercontent.com/cheikhoudieng/stream-data/refs/heads/main/live/cricfy_output/cricfy_database.json");
+  const [urlInput, setUrlInput] = useState(apiUrl|| "https://raw.githubusercontent.com/cheikhoudieng/stream-data/refs/heads/main/live/output/events.json");
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -62,9 +62,6 @@ export function SettingsView({ onFileUpload, onFetchApi, apiUrl, isLoading }: Se
               required
               className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus-visible:ring-1 focus-visible:ring-indigo-500 font-mono transition-colors"
             />
-            <p className="text-[11px] text-slate-500 mt-2">
-              Note: Si votre fichier est sur GitHub, utilisez le lien "Raw" (ex: <span className="text-slate-400">raw.githubusercontent.com/...</span>)
-            </p>
           </div>
           <button 
             type="submit"

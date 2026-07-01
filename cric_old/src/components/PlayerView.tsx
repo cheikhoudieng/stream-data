@@ -40,54 +40,12 @@ export interface StreamSource {
   licenseUrl?: string;
 }
 
-// ─── Server probing ───────────────────────────────────────────────────────────
-interface ProbeResult {
-  status: 'fast' | 'slow' | 'dead';
-  ms: number;
-  httpCode: number | null;
-}
-
-const PROBE_TIMEOUT_MS = 5000;
-const PROBE_FAST_THRESHOLD_MS = 1500;
-
-async function probeSource(source: Source): Promise<ProbeResult> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
-  const start = performance.now();
-
-  try {
-    const isProgressive = source.format === 'progressive';
-    const res = await fetch(source.url, {
-      method: 'GET',
-      signal: controller.signal,
-      cache: 'no-store',
-      // Manifestes HLS/DASH sont légers (texte). Pour progressive, on limite
-      // le téléchargement au strict minimum via Range.
-      headers: isProgressive ? { Range: 'bytes=0-2047' } : {},
-    });
-    const elapsed = performance.now() - start;
-    clearTimeout(timeoutId);
-    try { res.body?.cancel(); } catch {}
-
-    if (!res.ok && res.status !== 206) {
-      return { status: 'dead', ms: elapsed, httpCode: res.status };
-    }
-    return {
-      status: elapsed < PROBE_FAST_THRESHOLD_MS ? 'fast' : 'slow',
-      ms: elapsed,
-      httpCode: res.status,
-    };
-  } catch {
-    clearTimeout(timeoutId);
-    return { status: 'dead', ms: performance.now() - start, httpCode: null };
-  }
-}
 // ─── Constants ───────────────────────────────────────────────────────────────
 const resizeModes = ['contain', 'cover', 'fill'] as const;
 const resizeLabels = { contain: 'AJUSTER', cover: 'ZOOM', fill: 'REMPLIR' };
 
-const MAX_AUTO_RETRIES         = 2;
-const MAX_SOFT_RECOVERIES      = 2;
+const MAX_AUTO_RETRIES         = 5;
+const MAX_SOFT_RECOVERIES      = 3;
 const STALL_CHECK_MS           = 3000;
 const STALL_TICKS_BEFORE_ACTION = 3;
 const MAX_NUDGES_BEFORE_RELOAD = 2;
@@ -294,10 +252,6 @@ export function PlayerView({
   const activeIndexRef = useRef(-1);
   const loadSourceRef  = useRef<((idx: number, isRetry?: boolean) => void) | undefined>(undefined);
 
-  const [serverProbes, setServerProbes] = useState<Record<number, ProbeResult>>({});
-  const probeBatchIdRef = useRef(0);
-  const autoPlayDoneRef = useRef(false);
-
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   useEffect(() => {
     isMountedRef.current = true;
@@ -324,8 +278,16 @@ export function PlayerView({
       const { url: cleanUrl, headers: parsedHeaders } = parseCustomLink(is.url);
       const needsHeaders = Object.keys(parsedHeaders).length > 0;
       const format = detectFormat(cleanUrl, is.type || 'auto');
+
+      // HLS / progressive → proxy l'URL top-level avec headers baked-in.
+      // Le Worker réécrira aussi chaque segment dans le manifest HLS.
+      //
+      // DASH → Shaka résout BaseURL/SegmentTemplate avant notre request filter.
+      // On garde la vraie URL ici ; le filter Shaka proxiera chaque URI résolue.
       const shouldProxyTopUrl = needsHeaders && format !== 'dash';
-      const playbackUrl = shouldProxyTopUrl ? buildProxiedUrl(cleanUrl, parsedHeaders) : cleanUrl;
+      const playbackUrl = shouldProxyTopUrl
+        ? buildProxiedUrl(cleanUrl, parsedHeaders)
+        : cleanUrl;
 
       return {
         url: playbackUrl,
@@ -333,6 +295,7 @@ export function PlayerView({
         drmType:    is.drmType    || 'none',
         licenseUrl: is.licenseUrl || '',
         clearkeys:  is.clearkeys  || '',
+        // DASH seulement : les headers seront injectés dans le request filter Shaka
         headers: format === 'dash' ? parsedHeaders : {},
         resizeMode: 'contain',
         label: is.name || `Server ${idx + 1}`,
@@ -341,36 +304,8 @@ export function PlayerView({
 
     setSources(parsedSources);
     sourcesRef.current = parsedSources;
-
-    // ── Ping/Probe race ──────────────────────────────────────────────────────
-    const batchId = ++probeBatchIdRef.current;
-    setServerProbes({});
-    autoPlayDoneRef.current = false;
-
-    parsedSources.forEach((src, idx) => {
-      probeSource(src).then(result => {
-        if (probeBatchIdRef.current !== batchId || !isMountedRef.current) return;
-        setServerProbes(prev => ({ ...prev, [idx]: result }));
-        if (!autoPlayDoneRef.current && result.status !== 'dead') {
-          autoPlayDoneRef.current = true;
-          loadSource(idx);
-        }
-      });
-    });
-
-    // Fallback : si tout timeout/échoue, on tente quand même le serveur 0
-    const fallbackTimer = setTimeout(() => {
-      if (probeBatchIdRef.current === batchId && !autoPlayDoneRef.current && isMountedRef.current) {
-        autoPlayDoneRef.current = true;
-        loadSource(0);
-      }
-    }, PROBE_TIMEOUT_MS + 500);
-
-    return () => clearTimeout(fallbackTimer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialStreams]);
-
-  
+    loadSource(0); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialStreams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Logging ────────────────────────────────────────────────────────────────
   const addLog = useCallback(
@@ -418,16 +353,8 @@ export function PlayerView({
       if (!isMountedRef.current || idx < 0) return;
       if (retryCountRef.current >= MAX_AUTO_RETRIES) {
         addLog(`Échec après ${MAX_AUTO_RETRIES} tentatives.`, 'error');
-        
-        // Auto-Fallback: Passer au serveur suivant si disponible
-        if (idx < sourcesRef.current.length - 1) {
-          addLog(`Passage automatique au serveur suivant (${idx + 2}/${sourcesRef.current.length})...`, 'warn');
-          loadSourceRef.current?.(idx + 1);
-          return;
-        }
-
         setRetryAttempt(retryCountRef.current);
-        setFriendlyError(`Impossible de lire les flux après plusieurs tentatives.`);
+        setFriendlyError(`Impossible de lire ce flux après ${MAX_AUTO_RETRIES} tentatives.`);
         setStatus('ERREUR');
         setIsLoading(false);
         return;
@@ -587,29 +514,19 @@ export function PlayerView({
             if (!isMountedRef.current || !data.fatal) return;
             addLog(`Erreur HLS fatale : ${data.type} — ${data.details}`, 'error');
 
-            // Fail-Fast: HTTP 403/404 ou erreur de manifeste
-            if (
-              data.response?.code === 403 || 
-              data.response?.code === 404 || 
-              data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR || 
-              data.details === Hls.ErrorDetails.MANIFEST_PARSING_ERROR
-            ) {
-              retryCountRef.current = MAX_AUTO_RETRIES; // Force l'auto-fallback immédiat
-            } else {
-              switch (data.type) {
-                case Hls.ErrorTypes.NETWORK_ERROR:
-                  networkErrorCountRef.current += 1;
-                  if (networkErrorCountRef.current <= MAX_SOFT_RECOVERIES) {
-                    hls.startLoad(); return;
-                  }
-                  break;
-                case Hls.ErrorTypes.MEDIA_ERROR:
-                  mediaErrorCountRef.current += 1;
-                  if (mediaErrorCountRef.current <= MAX_SOFT_RECOVERIES) {
-                    hls.recoverMediaError(); return;
-                  }
-                  break;
-              }
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                networkErrorCountRef.current += 1;
+                if (networkErrorCountRef.current <= MAX_SOFT_RECOVERIES) {
+                  hls.startLoad(); return;
+                }
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                mediaErrorCountRef.current += 1;
+                if (mediaErrorCountRef.current <= MAX_SOFT_RECOVERIES) {
+                  hls.recoverMediaError(); return;
+                }
+                break;
             }
             scheduleRetry(idx);
           });
@@ -686,10 +603,6 @@ export function PlayerView({
             return;
           }
           addLog('Erreur Shaka critique : ' + error.code, 'error');
-          // Fail-Fast: HTTP 403/404 (Code 1011 = BAD_HTTP_STATUS)
-          if (error.code === 1011 && error.data && (error.data[1] === 403 || error.data[1] === 404)) {
-            retryCountRef.current = MAX_AUTO_RETRIES; // Force l'auto-fallback immédiat
-          }
           scheduleRetry(idx);
         });
 
@@ -728,10 +641,7 @@ export function PlayerView({
           attemptPlay();
         }).catch((e: any) => {
           if (!isMountedRef.current) return;
-          addLog('Erreur de chargement DASH : ' + (e.message || e.code), 'error');
-          if (e.code === 1011 && e.data && (e.data[1] === 403 || e.data[1] === 404)) {
-            retryCountRef.current = MAX_AUTO_RETRIES; // Force l'auto-fallback immédiat
-          }
+          addLog('Erreur de chargement DASH : ' + e.message, 'error');
           scheduleRetry(idx);
         });
 
@@ -863,9 +773,6 @@ export function PlayerView({
       const err = video.error;
       addLog('Erreur média' + (err ? ` (code ${err.code})` : ''), 'error');
       setFriendlyError(mediaErrorMessage(err?.code));
-      if (err?.code === 4) { // MEDIA_ERR_SRC_NOT_SUPPORTED (souvent un 404)
-        retryCountRef.current = MAX_AUTO_RETRIES; // Fail-fast
-      }
       scheduleRetry(activeIndexRef.current);
     };
     const onLoadedMetadata = () => {
@@ -1039,21 +946,6 @@ export function PlayerView({
     setFriendlyError('');
     if (activeIndexRef.current >= 0) loadSource(activeIndexRef.current);
   };
-
-  const retryProbe = useCallback((idx: number) => {
-    const src = sourcesRef.current[idx];
-    if (!src) return;
-    setServerProbes(prev => {
-      const next = { ...prev };
-      delete next[idx];
-      return next;
-    });
-    const batchId = probeBatchIdRef.current;
-    probeSource(src).then(result => {
-      if (probeBatchIdRef.current !== batchId || !isMountedRef.current) return;
-      setServerProbes(prev => ({ ...prev, [idx]: result }));
-    });
-  }, []);
 
   // ── Scrub / timeline ───────────────────────────────────────────────────────
   const seekFromEvent = useCallback(
@@ -1331,89 +1223,31 @@ export function PlayerView({
             )}
           </div>
 
-          {/* Serveurs — probes */}
-{sources.length === 0 ? (
-  <div className="text-sm font-mono text-slate-500 py-4 italic shrink-0">
-    Sélectionnez un match dans l'onglet Events.
-  </div>
-) : (
-  <div className="flex flex-col gap-3 shrink-0">
-    <div>
-      <div className="px-1 py-1">
-        <span className="text-xs font-bold tracking-widest text-emerald-400 uppercase">
-          🎯 Serveurs Actifs / Performants
-        </span>
-      </div>
-      <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
-        {sources
-          .map((s, idx) => ({ s, idx, probe: serverProbes[idx] }))
-          .filter(({ probe }) => !probe || probe.status !== 'dead')
-          .sort((a, b) => (a.probe?.ms ?? Infinity) - (b.probe?.ms ?? Infinity))
-          .map(({ s, idx, probe }) => (
-            <div
-              key={idx}
-              tabIndex={0}
-              onClick={() => loadSource(idx)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); loadSource(idx); } }}
-              className={`flex-none w-48 p-3 rounded-xl border cursor-pointer relative transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
-                activeIndex === idx ? 'bg-indigo-500/10 border-indigo-500/50' : 'bg-slate-900 border-slate-800 hover:border-slate-600'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="font-bold text-sm text-slate-200 line-clamp-1">{s.label}</div>
-                {probe ? (
-                  <span className={`shrink-0 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                    probe.status === 'fast' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'
-                  }`}>
-                    {Math.round(probe.ms)}ms
-                  </span>
-                ) : (
-                  <div className="w-3 h-3 border-2 border-slate-600 border-t-indigo-400 rounded-full animate-spin shrink-0 mt-0.5" />
-                )}
+          {/* Playlist */}
+          <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar shrink-0">
+            {sources.length === 0 ? (
+              <div className="text-sm font-mono text-slate-500 py-4 italic">
+                Sélectionnez un match dans l'onglet Events.
               </div>
-              <div className={`text-[10px] font-mono mt-1 ${activeIndex === idx ? 'text-indigo-400' : 'text-slate-500'}`}>
-                {s.format.toUpperCase()} {s.drmType !== 'none' ? `· ${s.drmType.toUpperCase()}` : ''}
-              </div>
-            </div>
-          ))}
-      </div>
-    </div>
-
-    {Object.values(serverProbes).some(p => p.status === 'dead') && (
-      <div>
-        <div className="px-1 py-1">
-          <span className="text-xs font-bold tracking-widest text-red-400 uppercase">
-            ❌ Serveurs en erreur
-          </span>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar opacity-80">
-          {sources
-            .map((s, idx) => ({ s, idx, probe: serverProbes[idx] }))
-            .filter(({ probe }) => probe?.status === 'dead')
-            .map(({ s, idx, probe }) => (
-              <div
-                key={idx}
-                className="flex-none w-48 p-3 rounded-xl border border-red-900/40 bg-red-950/20 relative"
-              >
-                <div className="font-bold text-sm text-slate-400 line-clamp-1 pr-5">{s.label}</div>
-                <div className="text-[10px] font-mono mt-1 text-red-400">
-                  {probe!.httpCode ? `HTTP ${probe!.httpCode}` : 'Timeout / Injoignable'}
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); retryProbe(idx); }}
-                  aria-label="Retester ce serveur"
-                  className="absolute top-2 right-2 text-red-400 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 rounded"
+            ) : (
+              sources.map((s, idx) => (
+                <div
+                  key={idx}
+                  tabIndex={0}
+                  onClick={() => loadSource(idx)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); loadSource(idx); } }}
+                  className={`flex-none w-48 p-3 rounded-xl border cursor-pointer relative group transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                    activeIndex === idx ? 'bg-indigo-500/10 border-indigo-500/50' : 'bg-slate-900 border-slate-800 hover:border-slate-600'
+                  }`}
                 >
-                  <RefreshCw className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-        </div>
-      </div>
-    )}
-  </div>
-)}
-
+                  <div className="font-bold text-sm text-slate-200 line-clamp-1 pr-2">{s.label}</div>
+                  <div className={`text-[10px] font-mono mt-1 ${activeIndex === idx ? 'text-indigo-400' : 'text-slate-500'}`}>
+                    {s.format.toUpperCase()} {s.drmType !== 'none' ? `· ${s.drmType.toUpperCase()}` : ''}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
           {/* Recommendations */}
           {events.length > 0 && onPlayStream && (
