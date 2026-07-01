@@ -14,6 +14,7 @@
  *
  * Variable d'environnement attendue côté Vercel :
  *   VITE_PROXY_URL=https://proxy.yourdomain.workers.dev
+ * export CLOUDFLARE_API_TOKEN="VOTRE_JETON_COPIÉ_ICI"
  */
 
 const CORS_HEADERS: HeadersInit = {

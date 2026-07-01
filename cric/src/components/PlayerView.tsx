@@ -11,7 +11,7 @@ import { EventItem } from '../types';
 // En dev : VITE_PROXY_URL=http://localhost:8787 (wrangler dev)
 // En prod : VITE_PROXY_URL=https://media-proxy.<account>.workers.dev
 //   ou       VITE_PROXY_URL=https://proxy.yourdomain.com  (custom domain)
-const PROXY_BASE = (import.meta as any).env?.VITE_PROXY_URL ?? '';
+const PROXY_BASE = (import.meta as any).env?.VITE_PROXY_URL ?? 'https://cric-proxy-worker.cheikhoudieng0511.workers.dev';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Source {
