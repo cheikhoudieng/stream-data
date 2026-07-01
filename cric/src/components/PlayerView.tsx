@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, FormEvent, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Hls from 'hls.js';
 import shaka from 'shaka-player/dist/shaka-player.compiled.js';
-import { Play, Pause, Volume2, VolumeX, Maximize, Lock, Unlock, X, MonitorPlay, PictureInPicture, Terminal, Layers, Calendar, Clock, Tv, Captions, Languages, RefreshCw } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Lock, Unlock, PictureInPicture, Tv, Captions, Languages, RefreshCw, Settings } from 'lucide-react';
 import { EventItem } from '../types';
 
 interface Source {
@@ -25,6 +25,13 @@ const resizeModes = ['contain', 'cover', 'fill'] as const;
 const resizeLabels = { contain: 'AJUSTER', cover: 'ZOOM', fill: 'REMPLIR' };
 
 const MAX_AUTO_RETRIES = 5;
+const MAX_SOFT_RECOVERIES = 3; // network/media recoveries before a full reload
+const STALL_CHECK_MS = 3000;
+const STALL_TICKS_BEFORE_ACTION = 3; // ~9s stuck before we nudge
+const MAX_NUDGES_BEFORE_RELOAD = 2;
+const CONTROLS_HIDE_MS = 3500;
+const RESUME_STORAGE_PREFIX = 'cicaw_pos_';
+const VOLUME_STORAGE_KEY = 'cicaw_player_volume';
 
 const FORBIDDEN_HEADERS = [
   'user-agent', 'referer', 'cookie', 'host', 'origin', 'content-length',
@@ -32,8 +39,25 @@ const FORBIDDEN_HEADERS = [
   'trailer', 'transfer-encoding', 'upgrade'
 ];
 
-function escapeHtml(s: string) {
-  return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c));
+let shakaPolyfillsInstalled = false;
+function ensureShakaPolyfills() {
+  if (!shakaPolyfillsInstalled) {
+    shaka.polyfill.installAll();
+    shakaPolyfillsInstalled = true;
+  }
+}
+
+function safeStorageGet(key: string): string | null {
+  try { return window.localStorage.getItem(key); } catch { return null; }
+}
+function safeStorageSet(key: string, value: string) {
+  try { window.localStorage.setItem(key, value); } catch { /* quota / privacy mode — ignore */ }
+}
+function safeStorageRemove(key: string) {
+  try { window.localStorage.removeItem(key); } catch { /* ignore */ }
+}
+function positionKey(url: string) {
+  return RESUME_STORAGE_PREFIX + encodeURIComponent(url).slice(0, 180);
 }
 
 function fmtTime(s: number) {
@@ -61,28 +85,24 @@ function parseClearkeyLines(text: string) {
   }).filter(p => p.kid && p.k);
 }
 
-function parseHeaders(text: string, logFn: (msg: string, level: 'warn') => void) {
-  const out: Record<string, string> = {};
-  const ignored: string[] = [];
-  (text || '').split('\n').forEach(line => {
-    const idx = line.indexOf(':');
-    if (idx < 0) return;
-    const name = line.slice(0, idx).trim();
-    const value = line.slice(idx + 1).trim();
-    if (!name) return;
-    if (FORBIDDEN_HEADERS.includes(name.toLowerCase())) { ignored.push(name); return; }
-    out[name] = value;
-  });
-  if (ignored.length) logFn('En-têtes ignorés (protégés par le navigateur) : ' + ignored.join(', '), 'warn');
-  return out;
-}
-
 function detectFormat(url: string, override: string) {
   if (override && override !== 'auto') return override;
   const clean = url.split('?')[0].split('#')[0].toLowerCase();
   if (clean.endsWith('.m3u8')) return 'hls';
   if (clean.endsWith('.mpd')) return 'dash';
   return 'progressive';
+}
+
+// Friendly, non-technical messages for the small set of native
+// HTMLMediaElement error codes — shown to the user instead of "code 3".
+function mediaErrorMessage(code?: number) {
+  switch (code) {
+    case 1: return 'Lecture interrompue.';
+    case 2: return 'Erreur réseau pendant le chargement.';
+    case 3: return 'Le flux est corrompu ou mal encodé.';
+    case 4: return "Ce format n'est pas supporté par votre navigateur.";
+    default: return 'Erreur de lecture inconnue.';
+  }
 }
 
 export interface StreamSource {
@@ -112,6 +132,7 @@ export function PlayerView({
   
   const hlsRef = useRef<any>(null);
   const shakaRef = useRef<any>(null);
+  const isMountedRef = useRef(true);
 
   const [sources, setSources] = useState<Source[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -126,16 +147,52 @@ export function PlayerView({
   const [bufferedEnd, setBufferedEnd] = useState(0);
   const [scrubbing, setScrubbing] = useState(false);
 
+  const [volume, setVolume] = useState(1);
+
   const [subtitleTracks, setSubtitleTracks] = useState<TrackOption[]>([]);
   const [audioTracks, setAudioTracks] = useState<TrackOption[]>([]);
+  const [qualityLevels, setQualityLevels] = useState<TrackOption[]>([]);
   const [activeSubtitleId, setActiveSubtitleId] = useState<number | string>(-1);
   const [activeAudioId, setActiveAudioId] = useState<number | string>(-1);
-  const [tracksMenuOpen, setTracksMenuOpen] = useState<'subtitles' | 'audio' | null>(null);
+  const [activeQualityId, setActiveQualityId] = useState<number | string>(-1);
+  const [tracksMenuOpen, setTracksMenuOpen] = useState<'subtitles' | 'audio' | 'quality' | null>(null);
 
   const [retryAttempt, setRetryAttempt] = useState(0);
+  const [friendlyError, setFriendlyError] = useState('');
   const retryCountRef = useRef(0);
+  const networkErrorCountRef = useRef(0);
+  const mediaErrorCountRef = useRef(0);
+  const stallTicksRef = useRef(0);
+  const nudgeAttemptsRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const lastSaveRef = useRef(0);
+
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const [status, setStatus] = useState<'ARRÊTÉ' | 'CHARGEMENT' | 'LECTURE' | 'PAUSE' | 'TERMINÉ' | 'ERREUR'>('ARRÊTÉ');
+
+  const sourcesRef = useRef<Source[]>([]);
+  const activeIndexRef = useRef(-1);
+  const loadSourceRef = useRef<((idx: number, isRetry?: boolean) => void) | undefined>(undefined);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  // Restore persisted volume once on mount
+  useEffect(() => {
+    const saved = safeStorageGet(VOLUME_STORAGE_KEY);
+    if (saved !== null) {
+      const v = parseFloat(saved);
+      if (!isNaN(v) && v >= 0 && v <= 1) setVolume(v);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.volume = volume;
+  }, [volume]);
 
   useEffect(() => {
     if (initialStreams && initialStreams.length > 0) {
@@ -188,12 +245,6 @@ export function PlayerView({
     }
   }, [addLog]);
 
-  const sourcesRef = useRef<Source[]>([]);
-  const activeIndexRef = useRef(-1);
-  // Holds the latest loadSource implementation so scheduleRetry can call it
-  // without creating a circular useCallback dependency.
-  const loadSourceRef = useRef<(idx: number, isRetry?: boolean) => void>();
-
   useEffect(() => {
     sourcesRef.current = sources;
   }, [sources]);
@@ -202,13 +253,14 @@ export function PlayerView({
     activeIndexRef.current = activeIndex;
   }, [activeIndex]);
 
-  // Auto-retry: fires immediately (no delay) on fatal playback errors,
+  // Auto-retry: fires immediately (no delay) on unrecoverable fatal errors,
   // up to MAX_AUTO_RETRIES, then surfaces a manual retry button.
   const scheduleRetry = useCallback((idx: number) => {
-    if (idx < 0) return;
+    if (!isMountedRef.current || idx < 0) return;
     if (retryCountRef.current >= MAX_AUTO_RETRIES) {
       addLog(`Échec après ${MAX_AUTO_RETRIES} tentatives automatiques.`, 'error');
       setRetryAttempt(retryCountRef.current);
+      setFriendlyError(`Impossible de lire ce flux après ${MAX_AUTO_RETRIES} tentatives.`);
       setStatus('ERREUR');
       setIsLoading(false);
       return;
@@ -237,7 +289,16 @@ export function PlayerView({
     setActiveAudioId(hls.audioTrack);
   }, []);
 
-  const refreshShakaTracks = useCallback((player: any) => {
+  const refreshHlsQualities = useCallback((hls: any) => {
+    const levels: TrackOption[] = (hls.levels || []).map((lvl: any, i: number) => ({
+      id: i,
+      label: lvl.height ? `${lvl.height}p` : `${Math.round((lvl.bitrate || 0) / 1000)} kbps`
+    }));
+    setQualityLevels(levels);
+    setActiveQualityId(hls.autoLevelEnabled ? -1 : hls.currentLevel);
+  }, []);
+
+  const refreshShakaTracks = useCallback((player: any, preferredLanguage?: string) => {
     try {
       const texts = player.getTextTracks();
       setSubtitleTracks(texts.map((t: any) => ({
@@ -248,28 +309,50 @@ export function PlayerView({
       setActiveSubtitleId(-1); // sous-titres masqués par défaut
 
       const variants = player.getVariantTracks();
-      const seen = new Set<string>();
+      const seenLangs = new Set<string>();
       const auds: TrackOption[] = [];
       variants.forEach((t: any) => {
-        if (!t.language || seen.has(t.language)) return;
-        seen.add(t.language);
+        if (!t.language || seenLangs.has(t.language)) return;
+        seenLangs.add(t.language);
         auds.push({ id: t.language, label: t.language });
       });
       setAudioTracks(auds);
-      const active = variants.find((t: any) => t.active);
-      setActiveAudioId(active ? active.language : -1);
+      const activeVariant = variants.find((t: any) => t.active);
+      const language = preferredLanguage || (activeVariant ? activeVariant.language : undefined);
+      setActiveAudioId(activeVariant ? activeVariant.language : -1);
+
+      // Quality levels are scoped to the current audio language, since
+      // Shaka variant tracks bundle audio+video together.
+      const filtered = language ? variants.filter((t: any) => t.language === language) : variants;
+      const seenHeights = new Set<number>();
+      const qualities: TrackOption[] = [];
+      filtered.forEach((t: any) => {
+        if (t.height && !seenHeights.has(t.height)) {
+          seenHeights.add(t.height);
+          qualities.push({ id: t.id, label: `${t.height}p` });
+        }
+      });
+      qualities.sort((a, b) => parseInt(b.label) - parseInt(a.label));
+      setQualityLevels(qualities);
+      const abrEnabled = player.getConfiguration().abr.enabled;
+      setActiveQualityId(abrEnabled ? -1 : (activeVariant ? activeVariant.id : -1));
     } catch (e) {
-      addLog('Impossible de récupérer les pistes audio/sous-titres.', 'warn');
+      addLog('Impossible de récupérer les pistes audio/sous-titres/qualité.', 'warn');
     }
   }, [addLog]);
 
   const loadSource = useCallback(async (idx: number, isRetry = false) => {
     const source = sourcesRef.current[idx];
-    if (!source) return;
+    if (!source || !isMountedRef.current) return;
 
     if (!isRetry) {
       retryCountRef.current = 0;
+      networkErrorCountRef.current = 0;
+      mediaErrorCountRef.current = 0;
+      stallTicksRef.current = 0;
+      nudgeAttemptsRef.current = 0;
       setRetryAttempt(0);
+      setFriendlyError('');
     }
 
     setActiveIndex(idx);
@@ -278,12 +361,15 @@ export function PlayerView({
     setStatus('CHARGEMENT');
     setSubtitleTracks([]);
     setAudioTracks([]);
+    setQualityLevels([]);
     setActiveSubtitleId(-1);
     setActiveAudioId(-1);
+    setActiveQualityId(-1);
     setTracksMenuOpen(null);
 
     if (videoRef.current) {
       videoRef.current.style.objectFit = source.resizeMode;
+      videoRef.current.volume = volume;
     }
 
     if (source.format === 'hls') {
@@ -294,6 +380,7 @@ export function PlayerView({
           backBufferLength: 90,
           enableWorker: true,
           lowLatencyMode: true,
+          capLevelToPlayerSize: true, // évite de charger une qualité plus grande que la taille réelle du lecteur
           xhrSetup: (xhr: XMLHttpRequest) => {
             Object.entries(source.headers).forEach(([k, v]) => {
               try { xhr.setRequestHeader(k, v as string); } catch (e) {}
@@ -314,19 +401,46 @@ export function PlayerView({
         hlsRef.current = hls;
         
         hls.on(Hls.Events.ERROR, (evt: any, data: any) => {
-          if (data.fatal) {
-            addLog(`Erreur HLS fatale : ${data.type} — ${data.details}`, 'error');
-            scheduleRetry(idx);
+          if (!isMountedRef.current) return;
+
+          if (!data.fatal) {
+            // Non-fatal hiccups (dropped frames, single segment 404, etc.)
+            // are normal on live/flaky streams — log only, HLS.js self-heals.
+            return;
           }
+
+          addLog(`Erreur HLS fatale : ${data.type} — ${data.details}`, 'error');
+
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              networkErrorCountRef.current += 1;
+              if (networkErrorCountRef.current <= MAX_SOFT_RECOVERIES) {
+                addLog('Erreur réseau — relance du chargement sans réinitialiser le lecteur...', 'warn');
+                hls.startLoad();
+                return;
+              }
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              mediaErrorCountRef.current += 1;
+              if (mediaErrorCountRef.current <= MAX_SOFT_RECOVERIES) {
+                addLog('Erreur média — tentative de récupération...', 'warn');
+                hls.recoverMediaError();
+                return;
+              }
+              break;
+          }
+          // Recovery attempts exhausted, or an unrecoverable error type — full reload.
+          scheduleRetry(idx);
         });
 
-        // Subtitle/audio tracks are discovered from the manifest and stay
-        // in sync with currentTime automatically — HLS.js feeds them into
-        // the video element's native TextTrack cues, which the browser
-        // renders against video.currentTime on every frame.
-        hls.on(Hls.Events.MANIFEST_PARSED, () => refreshHlsTracks(hls));
+        // Subtitle/audio tracks and quality levels are discovered from the
+        // manifest and stay in sync with currentTime automatically — HLS.js
+        // feeds them into the video element's native TextTrack cues, which
+        // the browser renders against video.currentTime on every frame.
+        hls.on(Hls.Events.MANIFEST_PARSED, () => { refreshHlsTracks(hls); refreshHlsQualities(hls); });
         hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, () => refreshHlsTracks(hls));
         hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => refreshHlsTracks(hls));
+        hls.on(Hls.Events.LEVEL_SWITCHED, () => refreshHlsQualities(hls));
         
         hls.loadSource(source.url);
         hls.attachMedia(videoRef.current!);
@@ -335,13 +449,19 @@ export function PlayerView({
         addLog('Lecture HLS native (Safari Apple).', 'ok');
       } else {
         addLog('HLS non supporté par ce navigateur.', 'error');
-        scheduleRetry(idx);
+        setFriendlyError('Ce navigateur ne supporte pas la lecture HLS.');
+        setStatus('ERREUR');
+        setIsLoading(false);
+        return;
       }
       attemptPlay();
     } else if (source.format === 'dash') {
-      shaka.polyfill.installAll();
+      ensureShakaPolyfills();
       if (!shaka.Player.isBrowserSupported()) {
         addLog('Navigateur non supporté par Shaka Player', 'error');
+        setFriendlyError("Ce navigateur n'est pas supporté pour la lecture DASH.");
+        setStatus('ERREUR');
+        setIsLoading(false);
         return;
       }
 
@@ -355,16 +475,27 @@ export function PlayerView({
       });
 
       player.addEventListener('error', (e: any) => {
-        addLog('Erreur Shaka : ' + e.detail.code, 'error');
+        if (!isMountedRef.current) return;
+        const error = e.detail;
+        // Shaka has its own internal retry (via retryParameters below) for
+        // recoverable network hiccups, so we only escalate on CRITICAL.
+        if (error.severity === shaka.util.Error.Severity.RECOVERABLE) {
+          addLog('Erreur récupérable Shaka : ' + error.code, 'warn');
+          return;
+        }
+        addLog('Erreur Shaka critique : ' + error.code, 'error');
         scheduleRetry(idx);
       });
 
+      const retryParameters = { maxAttempts: 4, baseDelay: 500, backoffFactor: 2, fuzzFactor: 0.5, timeout: 0 };
       const shakaConfig: any = {
         streaming: {
           bufferingGoal: 30,
           rebufferingGoal: 2,
           bufferBehind: 30,
-        }
+          retryParameters,
+        },
+        manifest: { retryParameters }
       };
       if (source.drmType === 'clearkey' && source.clearkeys) {
         const clearKeysMap: Record<string, string> = {};
@@ -373,7 +504,7 @@ export function PlayerView({
         });
 
         shakaConfig.drm = { clearKeys: clearKeysMap };
-        shakaConfig.manifest = { dash: { ignoreDrmInfo: true } };
+        shakaConfig.manifest.dash = { ignoreDrmInfo: true };
         addLog('Forçage des clés ClearKey (ignoreDrmInfo activé).', 'ok');
       } else if (source.drmType !== 'none' && source.licenseUrl) {
         const sysMap: Record<string, string> = { widevine: 'com.widevine.alpha', playready: 'com.microsoft.playready' };
@@ -383,6 +514,7 @@ export function PlayerView({
       player.configure(shakaConfig);
 
       player.load(source.url).then(() => {
+        if (!isMountedRef.current) return;
         addLog('DASH chargé avec succès.', 'ok');
         // Shaka's own text/caption renderer is driven off video.currentTime
         // internally, so once a track is selected it stays frame-accurate
@@ -390,6 +522,7 @@ export function PlayerView({
         refreshShakaTracks(player);
         attemptPlay();
       }).catch((e: any) => {
+        if (!isMountedRef.current) return;
         addLog('Erreur de chargement DASH : ' + e.message, 'error');
         scheduleRetry(idx);
       });
@@ -397,6 +530,7 @@ export function PlayerView({
     } else {
       if (source.drmType === 'clearkey' && source.clearkeys) {
         setupNativeClearKey(videoRef.current!, source.clearkeys).then(() => {
+          if (!isMountedRef.current) return;
           videoRef.current!.src = source.url;
           attemptPlay();
         });
@@ -408,7 +542,7 @@ export function PlayerView({
         attemptPlay();
       }
     }
-  }, [destroyEngines, addLog, attemptPlay, scheduleRetry, refreshHlsTracks, refreshShakaTracks]);
+  }, [destroyEngines, addLog, attemptPlay, scheduleRetry, refreshHlsTracks, refreshHlsQualities, refreshShakaTracks, volume]);
 
   useEffect(() => {
     loadSourceRef.current = loadSource;
@@ -449,10 +583,10 @@ export function PlayerView({
     }
   };
 
-  // Subtitle/audio selection — works across all three playback engines and
-  // never has to "seek to resync": native TextTrack cues and Shaka's
-  // SimpleTextDisplayer both render against video.currentTime continuously,
-  // so once a track is on, it tracks the timeline on its own.
+  // Subtitle/audio/quality selection — works across all three playback
+  // engines and never has to "resync": native TextTrack cues and Shaka's
+  // text displayer both render against video.currentTime continuously, so
+  // once a track is on, it tracks the timeline on its own.
   const selectSubtitle = useCallback((id: number | string) => {
     if (hlsRef.current) {
       if (id === -1) {
@@ -494,12 +628,30 @@ export function PlayerView({
         // where it was, so the audio swap feels instant on the timeline.
         shakaRef.current.selectVariantTrack(track, true, 0.5);
         setActiveAudioId(id);
+        refreshShakaTracks(shakaRef.current, id as string);
       }
+    }
+    setTracksMenuOpen(null);
+  }, [refreshShakaTracks]);
+
+  const selectQuality = useCallback((id: number | string) => {
+    if (hlsRef.current) {
+      hlsRef.current.currentLevel = id === -1 ? -1 : (id as number); // -1 re-enables ABR
+      setActiveQualityId(id);
+    } else if (shakaRef.current) {
+      if (id === -1) {
+        shakaRef.current.configure({ abr: { enabled: true } });
+      } else {
+        shakaRef.current.configure({ abr: { enabled: false } });
+        const track = shakaRef.current.getVariantTracks().find((t: any) => t.id === id);
+        if (track) shakaRef.current.selectVariantTrack(track, true);
+      }
+      setActiveQualityId(id);
     }
     setTracksMenuOpen(null);
   }, []);
 
-  // Close the subtitles/audio popover on outside click
+  // Close the subtitles/audio/quality popover on outside click
   useEffect(() => {
     if (!tracksMenuOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -518,20 +670,46 @@ export function PlayerView({
 
     const onPlay = () => { setIsPlaying(true); setStatus('LECTURE'); };
     const onPause = () => { setIsPlaying(false); setStatus('PAUSE'); };
-    const onEnded = () => { setStatus('TERMINÉ'); };
+    const onEnded = () => {
+      setStatus('TERMINÉ');
+      const src = sourcesRef.current[activeIndexRef.current];
+      if (src) safeStorageRemove(positionKey(src.url));
+    };
     const onWaiting = () => setIsLoading(true);
     const onPlaying = () => setIsLoading(false);
     const onCanPlay = () => setIsLoading(false);
     const onError = () => {
       const err = video.error;
       addLog('Erreur média' + (err ? ' (code ' + err.code + ')' : ''), 'error');
+      setFriendlyError(mediaErrorMessage(err?.code));
       scheduleRetry(activeIndexRef.current);
+    };
+
+    const onLoadedMetadata = () => {
+      const src = sourcesRef.current[activeIndexRef.current];
+      if (!src || !video.duration) return;
+      const saved = safeStorageGet(positionKey(src.url));
+      if (saved) {
+        const t = parseFloat(saved);
+        if (t > 5 && t < video.duration - 15) {
+          video.currentTime = t;
+          addLog('Reprise à ' + fmtTime(t), 'info');
+        }
+      }
     };
 
     const onTimeUpdate = () => {
       if (video.duration) {
         setCurrentTime(video.currentTime);
         setDuration(video.duration);
+
+        // Throttled resume-position save (every ~5s), skipped near start/end.
+        const now = Date.now();
+        if (now - lastSaveRef.current > 5000 && video.currentTime > 5 && video.currentTime < video.duration - 15) {
+          lastSaveRef.current = now;
+          const src = sourcesRef.current[activeIndexRef.current];
+          if (src) safeStorageSet(positionKey(src.url), String(video.currentTime));
+        }
       }
     };
 
@@ -539,6 +717,10 @@ export function PlayerView({
       if (video.duration && video.buffered.length > 0) {
         setBufferedEnd(video.buffered.end(video.buffered.length - 1));
       }
+    };
+
+    const onVolumeChange = () => {
+      setIsMuted(video.muted || video.volume === 0);
     };
 
     video.addEventListener('play', onPlay);
@@ -549,8 +731,10 @@ export function PlayerView({
     video.addEventListener('playing', onPlaying);
     video.addEventListener('canplay', onCanPlay);
     video.addEventListener('error', onError);
+    video.addEventListener('loadedmetadata', onLoadedMetadata);
     video.addEventListener('timeupdate', onTimeUpdate);
     video.addEventListener('progress', onProgress);
+    video.addEventListener('volumechange', onVolumeChange);
 
     return () => {
       video.removeEventListener('play', onPlay);
@@ -561,10 +745,46 @@ export function PlayerView({
       video.removeEventListener('playing', onPlaying);
       video.removeEventListener('canplay', onCanPlay);
       video.removeEventListener('error', onError);
+      video.removeEventListener('loadedmetadata', onLoadedMetadata);
       video.removeEventListener('timeupdate', onTimeUpdate);
       video.removeEventListener('progress', onProgress);
+      video.removeEventListener('volumechange', onVolumeChange);
     };
   }, [addLog, scheduleRetry]);
+
+  // Stall watchdog: some failures (dead CDN edge, silently stuck segment
+  // fetch) never fire 'error' or 'waiting' — currentTime just stops
+  // advancing while state still says "playing". We poll for that and
+  // nudge (tiny seek) before escalating to a full reload.
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!isMountedRef.current) return;
+      const video = videoRef.current;
+      if (!video || video.paused || video.ended) { stallTicksRef.current = 0; return; }
+      if (status !== 'LECTURE') return;
+
+      if (Math.abs(video.currentTime - lastTimeRef.current) < 0.15) {
+        stallTicksRef.current += 1;
+        if (stallTicksRef.current >= STALL_TICKS_BEFORE_ACTION) {
+          stallTicksRef.current = 0;
+          nudgeAttemptsRef.current += 1;
+          if (nudgeAttemptsRef.current > MAX_NUDGES_BEFORE_RELOAD) {
+            nudgeAttemptsRef.current = 0;
+            addLog('Blocage persistant détecté — rechargement du flux.', 'warn');
+            scheduleRetry(activeIndexRef.current);
+          } else {
+            addLog('Lecture bloquée détectée — tentative de reprise.', 'warn');
+            try { video.currentTime = video.currentTime + 0.1; } catch {}
+          }
+        }
+      } else {
+        stallTicksRef.current = 0;
+        nudgeAttemptsRef.current = 0;
+      }
+      lastTimeRef.current = video.currentTime;
+    }, STALL_CHECK_MS);
+    return () => clearInterval(id);
+  }, [status, addLog, scheduleRetry]);
 
   // Keyboard controls
   useEffect(() => {
@@ -584,11 +804,13 @@ export function PlayerView({
       if (e.key === 'm') toggleMute();
       if (e.key === 'ArrowRight') video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
       if (e.key === 'ArrowLeft') video.currentTime = Math.max(0, video.currentTime - 10);
+      if (e.key === 'ArrowUp') { e.preventDefault(); handleVolumeChange(Math.min(1, volume + 0.1)); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); handleVolumeChange(Math.max(0, volume - 0.1)); }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLocked]);
+  }, [isLocked, volume]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -598,11 +820,25 @@ export function PlayerView({
 
   const toggleMute = () => {
     if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      if (!videoRef.current.muted && videoRef.current.volume === 0) videoRef.current.volume = 1;
-      setIsMuted(videoRef.current.muted);
+      const nextMuted = !videoRef.current.muted;
+      videoRef.current.muted = nextMuted;
+      if (!nextMuted && videoRef.current.volume === 0) {
+        handleVolumeChange(1);
+      }
+      setIsMuted(nextMuted);
     }
   };
+
+  const handleVolumeChange = useCallback((v: number) => {
+    const clamped = Math.min(1, Math.max(0, v));
+    setVolume(clamped);
+    if (videoRef.current) {
+      videoRef.current.volume = clamped;
+      videoRef.current.muted = clamped === 0;
+      setIsMuted(clamped === 0);
+    }
+    safeStorageSet(VOLUME_STORAGE_KEY, String(clamped));
+  }, []);
 
   const toggleResize = () => {
     if (videoRef.current && activeIndex >= 0) {
@@ -615,11 +851,28 @@ export function PlayerView({
     }
   };
 
+  // Cross-browser fullscreen, including iOS Safari where only the <video>
+  // element itself supports native fullscreen (webkitEnterFullscreen) —
+  // requestFullscreen on a container div silently fails there.
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().catch(err => addLog('Plein écran indisponible', 'warn'));
+    const doc = document as any;
+    const container = containerRef.current as any;
+    const video = videoRef.current as any;
+    const isFs = document.fullscreenElement || doc.webkitFullscreenElement;
+
+    if (!isFs) {
+      if (container?.requestFullscreen) {
+        container.requestFullscreen().catch(() => addLog('Plein écran indisponible', 'warn'));
+      } else if (container?.webkitRequestFullscreen) {
+        container.webkitRequestFullscreen();
+      } else if (video?.webkitEnterFullscreen) {
+        video.webkitEnterFullscreen();
+      } else {
+        addLog('Plein écran non supporté sur cet appareil', 'warn');
+      }
     } else {
-      document.exitFullscreen();
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
     }
   };
 
@@ -627,7 +880,7 @@ export function PlayerView({
     if (document.pictureInPictureElement) {
       document.exitPictureInPicture();
     } else if (videoRef.current?.requestPictureInPicture) {
-      videoRef.current.requestPictureInPicture().catch(err => addLog('PiP indisponible', 'warn'));
+      videoRef.current.requestPictureInPicture().catch(() => addLog('PiP indisponible', 'warn'));
     } else {
       addLog('Picture-in-Picture non supporté', 'warn');
     }
@@ -636,6 +889,7 @@ export function PlayerView({
   const retryNow = () => {
     retryCountRef.current = 0;
     setRetryAttempt(0);
+    setFriendlyError('');
     if (activeIndexRef.current >= 0) loadSource(activeIndexRef.current);
   };
 
@@ -670,9 +924,40 @@ export function PlayerView({
     };
   }, [scrubbing, seekFromEvent]);
 
+  // Controls auto-hide (works on touch too, unlike CSS-only :hover) —
+  // stays visible while paused, hides after a few idle seconds while playing.
+  const showControlsTemporarily = useCallback(() => {
+    setControlsVisible(true);
+    if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current);
+    if (isPlaying) {
+      hideControlsTimerRef.current = setTimeout(() => {
+        if (isMountedRef.current) setControlsVisible(false);
+      }, CONTROLS_HIDE_MS);
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    showControlsTemporarily();
+    return () => { if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current); };
+  }, [isPlaying, showControlsTemporarily]);
+
+  const handleVideoTap = () => {
+    if (!controlsVisible) {
+      showControlsTemporarily();
+      return;
+    }
+    togglePlay();
+    showControlsTemporarily();
+  };
+
   const activeSource = activeIndex >= 0 ? sources[activeIndex] : null;
   const pct = duration ? (currentTime / duration) * 100 : 0;
   const bufPct = duration ? (bufferedEnd / duration) * 100 : 0;
+  const activeQualityLabel = useMemo(() => {
+    if (activeQualityId === -1) return 'AUTO';
+    const found = qualityLevels.find(q => q.id === activeQualityId);
+    return found ? found.label : 'AUTO';
+  }, [activeQualityId, qualityLevels]);
 
   return (
     <div className="flex flex-col h-full bg-slate-950 text-slate-200">
@@ -692,6 +977,11 @@ export function PlayerView({
             }`}>
               DRM: {activeSource?.drmType && activeSource.drmType !== 'none' ? activeSource.drmType.toUpperCase() : (activeSource ? 'CLAIR' : '—')}
             </span>
+            {qualityLevels.length > 0 && (
+              <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold tracking-widest bg-slate-800 text-slate-400">
+                {activeQualityLabel}
+              </span>
+            )}
             <span className={`px-2.5 py-1 rounded-md text-xs font-mono font-bold tracking-widest ml-auto ${
               status === 'LECTURE' ? 'text-emerald-400 bg-emerald-500/10' :
               status === 'ERREUR' ? 'text-red-400 bg-red-500/10' :
@@ -705,13 +995,18 @@ export function PlayerView({
           <div 
             ref={containerRef}
             className="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shrink-0 group"
+            onMouseMove={showControlsTemporarily}
+            onTouchStart={showControlsTemporarily}
           >
             <video 
               ref={videoRef} 
               playsInline 
+              preload="metadata"
+              crossOrigin="anonymous"
               className="w-full h-full"
               style={{ objectFit: activeSource?.resizeMode || 'contain' }}
-              onClick={togglePlay}
+              onClick={handleVideoTap}
+              aria-label={activeSource ? `Lecteur vidéo : ${activeSource.label}` : 'Lecteur vidéo'}
             />
             
             {isLoading && status !== 'ERREUR' && (
@@ -723,13 +1018,12 @@ export function PlayerView({
             {status === 'ERREUR' && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-20 gap-3 px-4 text-center">
                 <span className="text-sm font-mono text-red-400">
-                  {retryAttempt >= MAX_AUTO_RETRIES
-                    ? `Échec après ${MAX_AUTO_RETRIES} tentatives automatiques`
-                    : 'Erreur de lecture'}
+                  {friendlyError || 'Erreur de lecture'}
                 </span>
                 <button
                   onClick={retryNow}
                   className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-mono tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                  aria-label="Réessayer la lecture"
                 >
                   <RefreshCw className="w-4 h-4" /> RÉESSAYER
                 </button>
@@ -737,9 +1031,16 @@ export function PlayerView({
             )}
 
             {!isLocked && (
-              <div className="absolute left-0 right-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20">
+              <div className={`absolute left-0 right-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent transition-opacity z-20 ${
+                controlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}>
                 <div 
                   ref={timelineRef}
+                  role="slider"
+                  aria-label="Progression de la lecture"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(pct)}
                   className="relative h-1.5 bg-white/20 rounded-full mb-4 cursor-pointer"
                   onMouseDown={(e) => { setScrubbing(true); seekFromEvent(e); }}
                   onTouchStart={(e) => { setScrubbing(true); seekFromEvent(e); }}
@@ -750,12 +1051,26 @@ export function PlayerView({
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <button onClick={togglePlay} className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded">
+                  <button onClick={togglePlay} aria-label={isPlaying ? 'Pause' : 'Lecture'} className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded">
                     {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
                   </button>
-                  <button onClick={toggleMute} className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded">
-                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                  </button>
+
+                  <div className="flex items-center gap-2 group/vol">
+                    <button onClick={toggleMute} aria-label={isMuted ? 'Activer le son' : 'Couper le son'} className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded">
+                      {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                    </button>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={isMuted ? 0 : volume}
+                      onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                      aria-label="Volume"
+                      className="w-0 group-hover/vol:w-16 focus:w-16 transition-all duration-200 accent-indigo-500 h-1 cursor-pointer"
+                    />
+                  </div>
+
                   <div className="text-xs font-mono text-slate-300">
                     {fmtTime(currentTime)} / {fmtTime(duration)}
                   </div>
@@ -763,12 +1078,45 @@ export function PlayerView({
                   <div className="flex-1" />
 
                   <div ref={tracksMenuRef} className="flex items-center gap-4">
+                    {qualityLevels.length > 1 && (
+                      <div className="relative">
+                        <button
+                          onClick={() => setTracksMenuOpen(tracksMenuOpen === 'quality' ? null : 'quality')}
+                          className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded"
+                          title="Qualité vidéo"
+                          aria-label="Choisir la qualité vidéo"
+                        >
+                          <Settings className="w-5 h-5" />
+                        </button>
+                        {tracksMenuOpen === 'quality' && (
+                          <div className="absolute bottom-8 right-0 bg-slate-900 border border-slate-700 rounded-lg py-1 w-36 text-xs font-mono z-30 shadow-lg max-h-52 overflow-y-auto">
+                            <button
+                              onClick={() => selectQuality(-1)}
+                              className={`w-full text-left px-3 py-2 hover:bg-slate-800 ${activeQualityId === -1 ? 'text-indigo-400' : 'text-slate-300'}`}
+                            >
+                              Auto
+                            </button>
+                            {qualityLevels.map(q => (
+                              <button
+                                key={q.id}
+                                onClick={() => selectQuality(q.id)}
+                                className={`w-full text-left px-3 py-2 hover:bg-slate-800 truncate ${activeQualityId === q.id ? 'text-indigo-400' : 'text-slate-300'}`}
+                              >
+                                {q.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {subtitleTracks.length > 0 && (
                       <div className="relative">
                         <button
                           onClick={() => setTracksMenuOpen(tracksMenuOpen === 'subtitles' ? null : 'subtitles')}
                           className={`hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded ${activeSubtitleId !== -1 ? 'text-indigo-400' : 'text-white'}`}
                           title="Sous-titres"
+                          aria-label="Choisir les sous-titres"
                         >
                           <Captions className="w-5 h-5" />
                         </button>
@@ -800,6 +1148,7 @@ export function PlayerView({
                           onClick={() => setTracksMenuOpen(tracksMenuOpen === 'audio' ? null : 'audio')}
                           className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded"
                           title="Piste audio"
+                          aria-label="Choisir la piste audio"
                         >
                           <Languages className="w-5 h-5" />
                         </button>
@@ -820,16 +1169,16 @@ export function PlayerView({
                     )}
                   </div>
                   
-                  <button onClick={toggleResize} className="text-xs font-mono font-bold tracking-widest text-slate-300 hover:text-white px-2 py-1 bg-white/10 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+                  <button onClick={toggleResize} aria-label="Changer le mode d'affichage" className="text-xs font-mono font-bold tracking-widest text-slate-300 hover:text-white px-2 py-1 bg-white/10 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
                     {activeSource ? resizeLabels[activeSource.resizeMode] : 'AJUSTER'}
                   </button>
-                  <button onClick={togglePip} className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded" title="Picture-in-Picture">
+                  <button onClick={togglePip} className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded" title="Picture-in-Picture" aria-label="Picture-in-Picture">
                     <PictureInPicture className="w-5 h-5" />
                   </button>
-                  <button onClick={() => setIsLocked(true)} className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded" title="Verrouiller">
+                  <button onClick={() => setIsLocked(true)} className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded" title="Verrouiller" aria-label="Verrouiller les contrôles">
                     <Lock className="w-5 h-5" />
                   </button>
-                  <button onClick={toggleFullscreen} className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded" title="Plein écran">
+                  <button onClick={toggleFullscreen} className="text-white hover:text-indigo-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded" title="Plein écran" aria-label="Plein écran">
                     <Maximize className="w-5 h-5" />
                   </button>
                 </div>
@@ -840,6 +1189,7 @@ export function PlayerView({
               <button 
                 onClick={() => setIsLocked(false)}
                 className="absolute bottom-4 right-4 bg-black/60 text-amber-400 border border-amber-500/40 rounded-lg px-4 py-2 flex items-center gap-2 text-xs font-mono tracking-widest hover:bg-black/80 z-30"
+                aria-label="Déverrouiller les contrôles"
               >
                 <Unlock className="w-4 h-4" /> DÉVERROUILLER
               </button>
