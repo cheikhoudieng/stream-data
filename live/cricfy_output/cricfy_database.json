@@ -1,0 +1,1914 @@
+{
+  "metadata": {
+    "generated_at": "2026-07-01 13:35:53",
+    "source": "Cricfy2"
+  },
+  "live_tv": [
+    {
+      "id": 62,
+      "order_index": 0,
+      "name": "FIFA World Cup 2026 Coming Soon ",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTPutHO3WcGM0tADaXFR5c2XxBiyKXtL2PRZEIolaxe47UX9iCh71VOVhM&s=10",
+      "type": "m3u",
+      "playlist_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTPutHO3WcGM0tADaXFR5c2XxBiyKXtL2PRZEIolaxe47UX9iCh71VOVhM&s=10",
+      "channels": []
+    },
+    {
+      "id": 49,
+      "order_index": 1,
+      "name": "JIOTV+ S3",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRh5KeAyYdOyxaCWDPbiUsJW7Oy4v_7uFqf06rIwGxaWc6nQuNVqZ2Q_Qej&s=10",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/Sflex0719/ZioGarmTara/main/ZioGarmTara.m3u",
+      "channels": []
+    },
+    {
+      "id": 52,
+      "order_index": 2,
+      "name": "Jio TV+ BD 2",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfVvg995SN55aY_K2JMLqZnIR5SYOSXFxVyHPmjgDXLA&s=10",
+      "type": "m3u",
+      "playlist_url": "https://m3u-tvb.pages.dev/jiobd.m3u",
+      "channels": []
+    },
+    {
+      "id": 13,
+      "order_index": 3,
+      "name": "FANCODE IND",
+      "logo": "https://play-lh.googleusercontent.com/lp1Tdhp75MQyrHqrsyRBV74HxoL3Ko8KRAjOUI1wUHREAxuuVwKR6vnamgvMEn4C4Q",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/drmlive/fancode-live-events/refs/heads/main/fancode.m3u",
+      "channels": []
+    },
+    {
+      "id": 51,
+      "order_index": 4,
+      "name": "World Country ",
+      "logo": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg3A1vF9O3uxY8bXlwpTzJkwdy2AuwpRx1yhg48vAbuIhjrFwQA8D0EHXtFoRWOxI_wWtMPBrK2dBkzf7AHzjAPeDvFs5oUdc3g5JBjZvmFQ_SFyBjy960YJvUXfZ35DW67txWlbaRn1CH1khxCMGkXGENvLjn9n-soCDhePR82gqhz0OpCFXHFcwQ_wRg/s1600/1000409995.jpg",
+      "type": "m3u",
+      "playlist_url": "https://iptv-org.github.io/iptv/index.country.m3u",
+      "channels": []
+    },
+    {
+      "id": 53,
+      "order_index": 5,
+      "name": "Play Tv",
+      "logo": "https://i.postimg.cc/Xvt90Gjc/Picsart_26_02_03_10_46_07_704.jpg",
+      "type": "m3u",
+      "playlist_url": "https://jiotv-playlist.pages.dev/freetvindia.m3u",
+      "channels": []
+    },
+    {
+      "id": 54,
+      "order_index": 6,
+      "name": "SONY IN",
+      "logo": "https://i.postimg.cc/tgv1zMt7/Picsart-26-01-27-01-50-58-041.jpg",
+      "type": "m3u",
+      "playlist_url": "https://sl-t.deadxploit.workers.dev/?get-pl|user-agent=mozila",
+      "channels": []
+    },
+    {
+      "id": 55,
+      "order_index": 7,
+      "name": "SONY IN 2",
+      "logo": "https://i.postimg.cc/tgv1zMt7/Picsart-26-01-27-01-50-58-041.jpg",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/ramnarayan01/data/refs/heads/main/s0nyind.m3u.html",
+      "channels": []
+    },
+    {
+      "id": 56,
+      "order_index": 8,
+      "name": "Pishow",
+      "logo": "https://assets-playztv.pages.dev/category/pishow.jpg",
+      "type": "m3u",
+      "playlist_url": "https://playztv-ol-pl.deadxploit.workers.dev/?get-pl&id=pishowxc.m3u|user-agent=mozila",
+      "channels": []
+    },
+    {
+      "id": 57,
+      "order_index": 9,
+      "name": "Waves OTT",
+      "logo": "https://assets-playztv.pages.dev/category/wvot.jpg",
+      "type": "m3u",
+      "playlist_url": "https://playlists-by-playztv.pages.dev/wavesno.m3u",
+      "channels": []
+    },
+    {
+      "id": 58,
+      "order_index": 10,
+      "name": "JagoBd",
+      "logo": "https://assets-playztv.pages.dev/category/jagobd.jpeg",
+      "type": "m3u",
+      "playlist_url": "https://m3u-tvb.pages.dev/Jjago.br.m3u8",
+      "channels": []
+    },
+    {
+      "id": 39,
+      "order_index": 11,
+      "name": "CRICHD",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ08h1gOe7MPxwehZBrbYKAUtjv22B6rAJ1kMkN-cea64Ka49KUyGU2lpTz&s=10",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/abusaeeidx/CricHd-playlists-Auto-Update-permanent/refs/heads/main/ALL.m3u",
+      "channels": []
+    },
+    {
+      "id": 1,
+      "order_index": 12,
+      "name": "India",
+      "logo": "https://apkfolder.io/wp-content/uploads/2026/01/India.webp",
+      "type": "custom",
+      "playlist_url": null,
+      "channels": []
+    },
+    {
+      "id": 2,
+      "order_index": 13,
+      "name": "Kolkata",
+      "logo": "https://apkfolder.io/wp-content/uploads/2026/01/kolkata-tv.png",
+      "type": "custom",
+      "playlist_url": null,
+      "channels": []
+    },
+    {
+      "id": 3,
+      "order_index": 14,
+      "name": "News",
+      "logo": "https://apkfolder.io/wp-content/uploads/2026/01/news.jpg",
+      "type": "custom",
+      "playlist_url": null,
+      "channels": []
+    },
+    {
+      "id": 4,
+      "order_index": 15,
+      "name": "Discovery",
+      "logo": "https://apkfolder.io/wp-content/uploads/2026/01/discovery.jpg",
+      "type": "custom",
+      "playlist_url": null,
+      "channels": []
+    },
+    {
+      "id": 5,
+      "order_index": 16,
+      "name": "Pakistan",
+      "logo": "https://apkfolder.io/wp-content/uploads/2026/01/pakistan.webp",
+      "type": "custom",
+      "playlist_url": null,
+      "channels": []
+    },
+    {
+      "id": 6,
+      "order_index": 17,
+      "name": "Bangla",
+      "logo": "https://apkfolder.io/wp-content/uploads/2026/01/bangla.webp",
+      "type": "custom",
+      "playlist_url": null,
+      "channels": []
+    },
+    {
+      "id": 7,
+      "order_index": 18,
+      "name": "Kids",
+      "logo": "https://apkfolder.io/wp-content/uploads/2026/01/KIds.png",
+      "type": "custom",
+      "playlist_url": null,
+      "channels": []
+    },
+    {
+      "id": 9,
+      "order_index": 19,
+      "name": "Tata Play",
+      "logo": "https://apkfolder.io/wp-content/uploads/2026/01/Tata.png",
+      "type": "m3u",
+      "playlist_url": "https://hotstarlive.delta-cloud.workers.dev/?token=240bb9-374e2e-3c13f0-4a7xz5",
+      "channels": []
+    },
+    {
+      "id": 10,
+      "order_index": 20,
+      "name": "Hotstar",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRWwYjMvB58DMLsL9Ii2fhvw6NBYvD1iVCjOMU8TXBLJt0eibLGOjoRkLJP&s=10",
+      "type": "m3u",
+      "playlist_url": "https://hotstar-live-event.alpha-circuit.workers.dev/?token=a13d9c-4b782a-6c90fd-9a1b84",
+      "channels": []
+    },
+    {
+      "id": 11,
+      "order_index": 21,
+      "name": "TATAPLAY BD",
+      "logo": "https://apkfolder.io/wp-content/uploads/2026/01/og_tata_play.png",
+      "type": "m3u",
+      "playlist_url": "https://ranapk.short.gy/BDIX/tata.php",
+      "channels": []
+    },
+    {
+      "id": 12,
+      "order_index": 22,
+      "name": "T SPORTS",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJ0QvfKyjAqcCOumIXjcuYg505GnaBeVk2lQ&usqp=CAU",
+      "type": "m3u",
+      "playlist_url": "https://fifabangladesh2-xyz-ekkj.spidy.online/AYN/tsports.m3u  ",
+      "channels": []
+    },
+    {
+      "id": 14,
+      "order_index": 23,
+      "name": "SONYLIV",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzscCrHEfnHNeZdMO3haF1XSVgjskN4TNv0g&usqp=CAU",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/doctor-8trange/zyphora/refs/heads/main/data/sony.m3u",
+      "channels": []
+    },
+    {
+      "id": 15,
+      "order_index": 24,
+      "name": "JIO IND",
+      "logo": "https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/jio-logo-icon.png ",
+      "type": "m3u",
+      "playlist_url": "https://jiotv.byte-vault.workers.dev/?token=42e4f5-2d873b-3c37d8-7f3f50",
+      "channels": []
+    },
+    {
+      "id": 18,
+      "order_index": 25,
+      "name": "SUN DIRECT",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwc4OuqPmOP-Fi9dhfiDw_q-s3rOmgCPla_IaE76VD2KRQ7c4KHeI2zJY&s=10",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/suntv.m3u",
+      "channels": []
+    },
+    {
+      "id": 19,
+      "order_index": 26,
+      "name": "VOOT BD",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfS6QZFts2FoedMGZE28H7Kh158PsrNIiabFBVJMy_jXa8Tvvb9WAlut8&s=10",
+      "type": "m3u",
+      "playlist_url": "https://ranapk.short.gy/VOOTBD.m3u",
+      "channels": []
+    },
+    {
+      "id": 20,
+      "order_index": 27,
+      "name": "VOOT IND",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfS6QZFts2FoedMGZE28H7Kh158PsrNIiabFBVJMy_jXa8Tvvb9WAlut8&s=10",
+      "type": "m3u",
+      "playlist_url": "https://jiocinema-live.cloud-hatchh.workers.dev/?token=42e4f5-2d414b-3c37d8-5f3f45",
+      "channels": []
+    },
+    {
+      "id": 21,
+      "order_index": 28,
+      "name": "SUN NXT",
+      "logo": "https://upload.wikimedia.org/wikipedia/en/d/d5/Sun_NXT_logo_small.png",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/alexandermail371/cricfytv/refs/heads/main/sunxt.m3u",
+      "channels": []
+    },
+    {
+      "id": 22,
+      "order_index": 29,
+      "name": "AIRTEL IND",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQf7pkggfHJKj2R8O6ttuHxgv-vQVL03xUeAg&usqp=CAU",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/artl.m3u",
+      "channels": []
+    },
+    {
+      "id": 23,
+      "order_index": 30,
+      "name": "DISTRO TV",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYQjBTT5SL_kuJF7CbQtoSEA7PzyiH9RYIuDO9F1sx87CtiULDyiDf7ybt&s=10",
+      "type": "m3u",
+      "playlist_url": "https://playlist-storage.pages.dev/PLAYLIST/DistroTV.m3u",
+      "channels": []
+    },
+    {
+      "id": 25,
+      "order_index": 31,
+      "name": "JIOTV+",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRh5KeAyYdOyxaCWDPbiUsJW7Oy4v_7uFqf06rIwGxaWc6nQuNVqZ2Q_Qej&s=10",
+      "type": "m3u",
+      "playlist_url": "https://m3u-86e.pages.dev/jtv-pl.txt",
+      "channels": []
+    },
+    {
+      "id": 26,
+      "order_index": 32,
+      "name": "JIOLIVE IND",
+      "logo": "https://lens-storage.storage.googleapis.com/png/bb364a303da24e5db23f01bac26949cf",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/alex8875/jc_live/refs/heads/main/jevents_live.m3u",
+      "channels": []
+    },
+    {
+      "id": 27,
+      "order_index": 33,
+      "name": "TAPMAD PK",
+      "logo": "https://vectorseek.com/wp-content/uploads/2023/02/Tapmad-Logo-Vector.jpg",
+      "type": "m3u",
+      "playlist_url": "https://so.napaextra.online/tapmad.m3u",
+      "channels": []
+    },
+    {
+      "id": 30,
+      "order_index": 34,
+      "name": "WORLD TV",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSg8OiEwOT5UL5UttBZ5Tnhgsod8i2EQlfB97FFchdBOo8e_PfxvR8RJ68&s=10",
+      "type": "m3u",
+      "playlist_url": "https://ranapk.short.gy/WorldTV11.m3u",
+      "channels": []
+    },
+    {
+      "id": 31,
+      "order_index": 35,
+      "name": "AYNA",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQvAant65yQ_au1e51MFs-uiE6juswXv4ZJoNCpzBBSg4q7DzJ1NeliS80c&s=10",
+      "type": "m3u",
+      "playlist_url": "https://playlist-cricfy.noobon.top/aynaott.php",
+      "channels": []
+    },
+    {
+      "id": 32,
+      "order_index": 36,
+      "name": "JIO CINEMA IND",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQc3qZ1WgzPyFRX4cWIBJF0MSjWW3gZcLFycg&usqp=CAU",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jcinema.m3u",
+      "channels": []
+    },
+    {
+      "id": 33,
+      "order_index": 37,
+      "name": "DISH TV",
+      "logo": "https://m.media-amazon.com/images/S/stores-image-uploads-eu-prod/1/AmazonStores/A21TJRUUN4KGV/d5086253b614724be106c06be13f7d54.w600.h600._RO299,1",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/dishtv.m3u",
+      "channels": []
+    },
+    {
+      "id": 34,
+      "order_index": 38,
+      "name": "SHOOQ PK",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSvSWLnpgyvbzV9rHkREzbsX1Rzh2IbEZBL8yPpSv8aCPmy1nVcv7BhIWQ&s=10",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/shoq.m3u",
+      "channels": []
+    },
+    {
+      "id": 35,
+      "order_index": 39,
+      "name": "SAMSUNG TV",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQI9T5vcm8wU-dLuaK5vBfoHpz8KL9Ru0aU1eoVaKNcqauxGtRTfvI1rGTA&s=10",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/samsungtv.m3u",
+      "channels": []
+    },
+    {
+      "id": 40,
+      "order_index": 40,
+      "name": "ZAP SPORTS",
+      "logo": "https://i.ibb.co/dJfysm3V/zap-Sports.png",
+      "type": "m3u",
+      "playlist_url": "https://tv.noobon.top/zapx/api.php?action=getIPTVPlaylist",
+      "channels": []
+    },
+    {
+      "id": 41,
+      "order_index": 41,
+      "name": "Pirates TV",
+      "logo": "https://raw.githubusercontent.com/FunctionError/Logos/main/Pirates-Tv.png",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/FunctionError/PiratesTv/refs/heads/main/combined_playlist.m3u",
+      "channels": []
+    },
+    {
+      "id": 42,
+      "order_index": 42,
+      "name": "YUPPTV",
+      "logo": "https://d229kpbsb5jevy.cloudfront.net/bott/v2/networks/circularimages/yupptv.png",
+      "type": "m3u",
+      "playlist_url": "https://tv.noobon.top/playlist/yapp.php",
+      "channels": []
+    },
+    {
+      "id": 43,
+      "order_index": 43,
+      "name": "DANGAL TV",
+      "logo": "https://assets-playztv.pages.dev/category/dangal.jpg",
+      "type": "m3u",
+      "playlist_url": "https://playlists-by-playztv.pages.dev/dangalp.m3u",
+      "channels": []
+    },
+    {
+      "id": 44,
+      "order_index": 44,
+      "name": "Movies & Series",
+      "logo": "https://i.postimg.cc/QCVVj6D1/Movies.png",
+      "type": "m3u",
+      "playlist_url": "http://tv.noobon.top/playlist/movies.php",
+      "channels": []
+    },
+    {
+      "id": 50,
+      "order_index": 45,
+      "name": "Music Channels ",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Music_logo.png",
+      "type": "m3u",
+      "playlist_url": "https://wasitv-pro.site/sportz.php?token=1wzIrANIxEtHDHKdVw9yYSddXRs_wyxn3PzVQN_mnIF4&gid=748863831",
+      "channels": []
+    },
+    {
+      "id": 59,
+      "order_index": 46,
+      "name": "Tapmad Live",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThztxuZ7fSKWHCAo0joPbMAWyvThLFn9LwWtgbqBNNb5kCddqhFHpBTuFV&s=10",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/srhady/tapmad-bd/refs/heads/main/tapmad_bd.m3u",
+      "channels": []
+    },
+    {
+      "id": 60,
+      "order_index": 47,
+      "name": "FIFA PLUS",
+      "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhokREPmu7NevdecCRJejEY1AOZZalcL-OOfxBTAw7dA&s=10",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/srhady/fifaplus/refs/heads/main/fifa_live.m3u",
+      "channels": []
+    },
+    {
+      "id": 61,
+      "order_index": 48,
+      "name": "ICC TV",
+      "logo": "https://m.media-amazon.com/images/I/31F7ropt9OL.png",
+      "type": "m3u",
+      "playlist_url": "https://raw.githubusercontent.com/doctor-8trange/nexphi0/refs/heads/main/data/icc.m3u",
+      "channels": []
+    },
+    {
+      "id": 63,
+      "order_index": 49,
+      "name": "India 2",
+      "logo": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg7fzGyWbud_hYnHVpSTgfwXP8IrBy8O1ujFUrZHnmx6ByIAq9v_xEljY1es86kt20xLt2QhNyVPV-jGnhLp4DF4NLYMs8lpW8CoTTHNMPVT4P2RmhaKBK-916L5bX-Zb6gx5lPnbs9o-0hKNHvPr9GEiKOfd8_zpdbcMveZJhOJNtfl0pfgp6Ju4HD-5Q/s1600/1000026341.png",
+      "type": "m3u",
+      "playlist_url": "https://so.napaextra.online/hin.m3u",
+      "channels": []
+    }
+  ],
+  "sports_tournaments": {
+    "Motorsport": "https://sportzfy.io/wp-content/uploads/2025/09/car-1.png",
+    "Tennis": "https://sportzfy.io/wp-content/uploads/2025/09/tennis-1.png",
+    "Basketball": "https://sportzfy.io/wp-content/uploads/2025/09/net.png",
+    "Rugby": "https://sportzfy.io/wp-content/uploads/2025/09/rugby-1.png",
+    "MotoGP": "https://sportzfy.io/wp-content/uploads/2025/09/car-1.png",
+    "Serie A": "https://access-control-center-prod.freevision.live/ss/tournament/23.png",
+    "Bundesliga": "https://access-control-center-prod.freevision.live/ss/tournament/35.png",
+    "Championship": "https://access-control-center-prod.freevision.live/ss/tournament/18.png",
+    "Saudi Pro League": "https://access-control-center-prod.freevision.live/ss/tournament/955.png",
+    "Premier League": "http://api.sofascore.com/api/v1/unique-tournament/17/image/dark",
+    "LaLiga": "http://api.sofascore.com/api/v1/unique-tournament/8/image/dark",
+    "LaLiga 2": "http://api.sofascore.com/api/v1/unique-tournament/54/image/dark",
+    "Trendyol Süper Lig": "http://api.sofascore.com/api/v1/unique-tournament/52/image/dark",
+    "Ligue 1": "http://api.sofascore.com/api/v1/unique-tournament/34/image/dark",
+    "Scottish Premiership": "http://api.sofascore.com/api/v1/unique-tournament/36/image/dark",
+    "2. Bundesliga": "http://api.sofascore.com/api/v1/unique-tournament/44/image/dark",
+    "Liga F Moeve": "http://api.sofascore.com/api/v1/unique-tournament/1127/image/dark",
+    "Formula 1": "https://scdnmain.net/assets/tournament/40-c.png",
+    "WWE": "https://static.wikia.nocookie.net/wweuniverse/images/f/f6/Wwelogo.png/revision/latest?cb=20101124080717",
+    "Aussie rules": "http://api.sofascore.com/api/v1/unique-tournament/10159/image/dark",
+    "American football": "http://api.sofascore.com/api/v1/unique-tournament/11208/image/dark",
+    "Darts": "https://img.sofascore.com/api/v1/unique-tournament/751/image",
+    "USL Championship": "http://api.sofascore.com/api/v1/unique-tournament/13363/image/dark",
+    "King's Cup": "http://api.sofascore.com/api/v1/unique-tournament/2058/image/dark",
+    "Copa del Rey": "http://api.sofascore.com/api/v1/unique-tournament/329/image/dark",
+    "Hockey": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbUpFzmV1xntBHleRGBqwy4yTi3jyHjpQLFpqEpMmQy8H9_TxA7WtK2Xs&s=10",
+    "Golf": "https://q.golf/cdn/shop/products/face_2048x2048.jpg?v=1672959337",
+    "UCL": "http://api.sofascore.com/api/v1/unique-tournament/7/image/dark",
+    "DAZN LIVE": "https://i.ibb.co/C5fPZjPy/images-12.jpg",
+    "Mixed Martial Arts": "http://api.sofascore.com/api/v1/unique-tournament/19906/image/dark",
+    "NETBALL": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSygpTxyPIX3ZkSvPFaDLL3iPDscve1yvyJaQ&usqp=CAU",
+    "World Cup Qual. UEFA": "http://api.sofascore.com/api/v1/unique-tournament/11/image/dark",
+    "Handball": "http://api.sofascore.com/api/v1/unique-tournament/165/image/dark",
+    "PUBG": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWlfYzJmW1CgrTei2WUk_9LuuUoIX_gtTl8n46uUfZBw&s=10",
+    "EPL": "http://api.sofascore.com/api/v1/unique-tournament/17/image/dark",
+    "Cricket": "https://apkfolder.io/wp-content/uploads/2026/01/cricket-1.png",
+    "Football": "https://apkfolder.io/wp-content/uploads/2026/01/football-1.png",
+    "Boxing": "https://apkfolder.io/wp-content/uploads/2026/01/boxing-gloves-2.png",
+    "Baseball": "https://apkfolder.io/wp-content/uploads/2026/01/games.png",
+    "Ice hockey": "https://apkfolder.io/wp-content/uploads/2026/01/ice-hockey-1.png"
+  },
+  "sports_events": [
+    {
+      "id": 35,
+      "order_index": 1,
+      "category": "Boxing",
+      "event_name": "AEW Dynamite",
+      "event_logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQB88iK4_VDCc8OWqAQ-UzYdZLl4hPmZSxXRaHiHwyf-g&s=10",
+      "team_a": {
+        "name": "AEW",
+        "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQB88iK4_VDCc8OWqAQ-UzYdZLl4hPmZSxXRaHiHwyf-g&s=10"
+      },
+      "team_b": {
+        "name": "AEW",
+        "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQB88iK4_VDCc8OWqAQ-UzYdZLl4hPmZSxXRaHiHwyf-g&s=10"
+      },
+      "date": "02/07/2026",
+      "time": "00:00:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "TSN SPORTS AQ",
+          "link": "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/3n6slkgh54/out/v1/8977baf175da4b94873194613dd3fe55/cenc.mpd",
+          "scheme": 0,
+          "api": "daa8ea92553fd16cd6bfae2b8c582715:4042e041b5639b79b69ae07a872eef9b",
+          "tokenApi": ""
+        },
+        {
+          "name": "WWE LIVE ",
+          "link": "https://601.formaturamaxi.com.br/aew.m3u8|Referer=https://roxiestreams.su&Origin=https://roxiestreams.su&User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "WWE AQ",
+          "link": "https://chatgpt.hereisman.net/playlist/49815/load-playlist?|Referer=https://gooz.aapmains.net",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "FOX SPORTS AQ",
+          "link": "https://a151aivottlinear-a.akamaihd.net/OTTB/sin-nitro/live/dash/enc/fdx74zqzhu/out/v1/7d7a8c6981a842b98a683e9fbfe51d17/cenc.mpd",
+          "scheme": 0,
+          "api": "9f327d24c66fbd84e15ab5c9ead7c7a4:83837185529c0c4048f81386c2d36426",
+          "tokenApi": ""
+        },
+        {
+          "name": "BACKUP AQ",
+          "link": "https://27lftgqlgzmy.windows-devs.top/AccessLog2/83_FHD/apache.m3u8|Referer=https://27lftgqlgzmy.windows-devs.top/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "BACKUP LQ",
+          "link": "https://27lftgqlgzmy.windows-devs.top/AccessLog2/108087_HD/apache.m3u8|Referer=https://27lftgqlgzmy.windows-devs.top/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "order_index": 2,
+      "category": "Motorsport",
+      "event_name": "MotoGP - Gran Prix of Hungary",
+      "event_logo": "https://raw.githubusercontent.com/xmrt624/logo/6fedc9ee79594fa82ff1671d42de6dd7e96d40c1/MotoGPX.png",
+      "team_a": {
+        "name": "MotoGP",
+        "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgDXg8WOTxDGYhsU_r4iaau8PucLtaXmSVO3Y_9CwO2Q&s=10"
+      },
+      "team_b": {
+        "name": "MotoGP",
+        "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgDXg8WOTxDGYhsU_r4iaau8PucLtaXmSVO3Y_9CwO2Q&s=10"
+      },
+      "date": "10/07/2026",
+      "time": "07:00:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "MotoGP - AQ",
+          "link": "https://otte.cache.aiv-cdn.net/lhr-nitro/live/clients/dash/enc/wjeweupwyc/out/v1/8197c8e055c94a868623653ac55c10bf/cenc.mpd",
+          "scheme": 0,
+          "api": "e03f302ec4dabcccca82cc9f76731ec9:53ea1027d2bf2893a552cf15bc0366de",
+          "tokenApi": ""
+        },
+        {
+          "name": "TNT SPORTS AQ",
+          "link": "https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/dash/enc/3j04z3pbit/out/v1/042ee0757ed348bf8c26f75895cae871/cenc.mpd",
+          "scheme": 0,
+          "api": "0b59ce06de74ed84f2eda5e81dadba13:48e4ba4ad6c2a60d2bda5d71a0050844",
+          "tokenApi": ""
+        },
+        {
+          "name": "SPOTV FHD",
+          "link": "https://qp-pldt-live-grp-13-prod.akamaized.net/out/u/dr_spotv2hd.mpd",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "FANCODE AQ",
+          "link": "https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/dash/enc/inpyms8ezu/out/v1/1084d5c9a97a4c5b9f9554c88f486646/cenc.mpd",
+          "scheme": 0,
+          "api": "065051b99bf5cf8d9a3bde5cbde6aaf9:214bd176832872339ce184338320f9a2",
+          "tokenApi": ""
+        },
+        {
+          "name": "TNT SPORTS",
+          "link": "https://instreams.pro/bil1/motogpen/tracks-v1a1/mono.m3u8|referer=https://instream.click/&origin=https://instream.click",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "SPOTV AQ",
+          "link": "https://mag02.tvx.prd.tv.odido.nl/wh7f454c46tw407556707_-381738111/PLTV/86/224/3221241511/3221241511.mpd?accountinfo=~~V2.0~yVi0dMX4icO5Ka9e92EQfg8812e1c1044f7d357066472e3ee99ef4~2dRB9E-vDtoAbYl169LbcJpxUgWVJtbeU_PlhGfNUflphvljOb5VaEhxruETYG9qcccaf5c5b655bf7504ed7ec5a1dd798f:UTC,",
+          "scheme": 0,
+          "api": "4dbea4b5713a4aa1ae3a2544cd522fc7:a8323ea99b2d6200a48e1bc27322d548",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 54,
+      "order_index": 3,
+      "category": "Motorsport",
+      "event_name": "F1 | Monaco Grand Prix",
+      "event_logo": "https://raw.githubusercontent.com/xmrt624/logo/refs/heads/main/f1.png",
+      "team_a": {
+        "name": "Formula 1",
+        "logo": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEisf1lphGAPsJzz9s89f8AVGiITtEZIrt3Xwg1u-SlmqQtIH13DRgSeOLExqvR4u0jaEtlAtfFyqqBXgBEnw9hP9BWoKQpErNFyEDJkKU4zXuIeqaFoQORWs3fnGWd2o6_TazAZn5ihmLgmNdbGmnWCnUQKP_BfRj44Lpck_OtE49p7n2Kk6k6KWjHOTsA/s1600/1000009765.jpg"
+      },
+      "team_b": {
+        "name": "Formula 1",
+        "logo": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEisf1lphGAPsJzz9s89f8AVGiITtEZIrt3Xwg1u-SlmqQtIH13DRgSeOLExqvR4u0jaEtlAtfFyqqBXgBEnw9hP9BWoKQpErNFyEDJkKU4zXuIeqaFoQORWs3fnGWd2o6_TazAZn5ihmLgmNdbGmnWCnUQKP_BfRj44Lpck_OtE49p7n2Kk6k6KWjHOTsA/s1600/1000009765.jpg"
+      },
+      "date": "05/07/2026",
+      "time": "14:00:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "APPLE TV+ - AQ",
+          "link": "https://otte.live.fly.ww.aiv-cdn.net/pdx-nitro/live/clients/dash/enc/uivuundx0o/out/v1/847ce646e6b5442491682bbb6602be11/cenc.mpd",
+          "scheme": 0,
+          "api": "1fa42226476f1e88ee7a3430684e3ee4:95d04e9596bb63db9ee5ad6b25035786",
+          "tokenApi": ""
+        },
+        {
+          "name": "SKY SPORTS - AQ",
+          "link": "https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/dash/enc/3mfnptraqh/out/v1/05b575b744274766a37f6a6241aa0309/cenc.mpd",
+          "scheme": 0,
+          "api": "e7a2aaef0a290e8c7c6b60465e4c4ccf:19c6e9904c23e34d62d92d871d6b96b6",
+          "tokenApi": ""
+        },
+        {
+          "name": "FANCODE - AQ",
+          "link": "https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/dash/enc/fdb3pubmek/out/v1/aefca6420f944a9482e117f315de535f/cenc.mpd",
+          "scheme": 0,
+          "api": "7e9239c1982d984a002df3ed049d0756:1b8a17598129a3618535c8fb05f103fe",
+          "tokenApi": ""
+        },
+        {
+          "name": "TSN SPORTS - AQ",
+          "link": "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/cjglydxghe/out/v1/8977baf175da4b94873194613dd3fe55/cenc.mpd|user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+          "scheme": 0,
+          "api": "85b277daf5aae05833fe43a68f587968:d52d7e9bc0bcd98787efd547ac91eca0",
+          "tokenApi": ""
+        },
+        {
+          "name": "F1 HD",
+          "link": "https://chatgpt.hereisman.net/playlist/52517/load-playlist?&.m3u8|Referer=https://gooz.aapmains.net",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "APPLE TV",
+          "link": "https://whioefwhi.sense-scramble-bay.xyz/out/v2/0fd4f8faa595ff8b72b4cf1aeaa818bb/index.m3u8?|referer=https://pushembdz.store/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "DAZN ES",
+          "link": "https://whioefwhi.sense-scramble-bay.xyz/out/v2/bbae016bb7b4268f9840a1811c507545/index.m3u8?|referer=https://pushembdz.store/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "SKY ITALY",
+          "link": "https://whioefwhi.sense-scramble-bay.xyz/out/v2/fbf28db395c645bb9a171ade16e90d36/index.m3u8?|referer=https://pushembdz.store/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "SKY SPORTS F1",
+          "link": "https://xstm.250909.cc/live/SPORTSFLUX-POOL-20acb0a9c8/5ffe6c552a88/1037.m3u8",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 69,
+      "order_index": 4,
+      "category": "Boxing",
+      "event_name": "🥊 WWE Friday Night SmackDown",
+      "event_logo": "https://github.com/xmrt624/logo/blob/main/wwe-logo-white-red-render.png?raw=true",
+      "team_a": {
+        "name": "WWE",
+        "logo": "https://www.wwe.com/f/styles/wwe_show_logo_l/public/all/2024/09/Smackdown_LOGO--c8e0b09904cb1356d309a8ea2acb0422.png"
+      },
+      "team_b": {
+        "name": "WWE",
+        "logo": "https://www.wwe.com/f/styles/wwe_show_logo_l/public/all/2024/09/Smackdown_LOGO--c8e0b09904cb1356d309a8ea2acb0422.png"
+      },
+      "date": "04/07/2026",
+      "time": "00:00:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "CricFy WWE HD",
+          "link": "https://chatgpt.hereisman.net/playlist/52583/load-playlist?|Referer=https://gooz.aapmains.net/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "WWE LIVE HD",
+          "link": "https://serendipity.loreofeldenring.site/dailymotion/live/playlist/1.m3u8",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "SD SERVER",
+          "link": "http://193.47.62.44/hls/RGREGREQZ.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=http://www.fawanews.sc/&Origin=http://www.fawanews.sc/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "CricFy TV+ HD",
+          "link": "https://26hrwgorfcmh.windows-devs.top/AccessLog2/83_FHD/apache.m3u8|Referer=https://26hrwgorfcmh.windows-devs.top/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "USA TV",
+          "link": "https://g001-sle-us-cmaf-prd-ak.pcdn03.cssott.com/Content/CMAF_OS1-CTR-4s-v2/Live/channel(12010340-12010340-4445585a62764)/master_2hr.mpd",
+          "scheme": 0,
+          "api": "58551b13211b37d5b325d67e5c6cabef:3b4c3f8b4236fc57d66cdb54a606fe41",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD QUALITY",
+          "link": "https://26hrwgorfcmh.windows-devs.top/AccessLog2/108085_HD/apache.m3u8|referer=https://26hrwgorfcmh.windows-devs.top/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 314,
+      "order_index": 5,
+      "category": "Boxing",
+      "event_name": "Live Events | Monday Night Raw",
+      "event_logo": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhrJX8VFtwdb0AWq64lhOVYbkKvFoiSROOixJeEU73uUDp25NzGuWNynMuEWC6ezIWj4Jyp3VN3rrQDufJZuMQ67Sys-xPilS4jvh-Ujk3-B0shI1O-RdhuZB9cRJ7oeMbIZZe9wih7krgECdqYLQiYYFX3N6pFL6QX3XsKc4ihKOyZ8mH0_QZcL0uqirs/s1600/1000025200.png",
+      "team_a": {
+        "name": "Raw",
+        "logo": "https://iili.io/C3vwB0Q.png"
+      },
+      "team_b": {
+        "name": "Raw",
+        "logo": "https://iili.io/C3vwB0Q.png"
+      },
+      "date": "07/07/2026",
+      "time": "00:00:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Cricfy TV HD",
+          "link": "https://chatgpt.hereisman.net/playlist/52071/load-playlist?&.m3u8|Referer=https://gooz.aapmains.net",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "FAST SERVER",
+          "link": "https://serendipity.loreofeldenring.site/dailymotion/live/playlist/5.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=http://www.fawanews.sc/&Origin=http://www.fawanews.sc/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "NETFLIX LIVE",
+          "link": "https://serendipity.loreofeldenring.site/dailymotion/live/playlist/1.m3u8",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD QUALITY",
+          "link": "https://26hrwgorfcmh.windows-devs.top/AccessLog2/83_FHD/apache.m3u8|Referer=https://26hrwgorfcmh.windows-devs.top/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "LOW QUALITY",
+          "link": "https://android-database1.firebase-api.com/AccessLog2/108085_SD/apache.m3u8|Referer=https://android-database1.firebase-api.com",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "ALT SERVER",
+          "link": "https://26hrwgorfcmh.windows-devs.top/AccessLog2/108085_HD/apache.m3u8|referer=https://26hrwgorfcmh.windows-devs.top/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 316,
+      "order_index": 6,
+      "category": "Cricket",
+      "event_name": "Sobers-Tissera Trophy",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/33863/image/dark",
+      "team_a": {
+        "name": "WI",
+        "logo": "https://img.sofascore.com/api/v1/team/187760/image"
+      },
+      "team_b": {
+        "name": "SL",
+        "logo": "https://img.sofascore.com/api/v1/team/187756/image"
+      },
+      "date": "03/07/2026",
+      "time": "14:00:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "CRICBUZZ HD",
+          "link": "https://sgzero.mokakdaoni.me/proxy/wb.php/https://livevideos.cricbuzz.com/hls/live/2110089/MENA-SEA/11946/152416/master.m3u8|Referer=https://livecricketsl.cc.nf/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "CRICBUZZ - AQ",
+          "link": "https://wcupzero.mokakdaoni.me/proxy/wb.php/https://livevideos.cricbuzz.com/hls/live/2110089/MENA-SEA/11946/152416/master.m3u8|Referer=https://livecricketsl.cc.nf/",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "TNT SPORTS - AQ",
+          "link": "https://otte.cache.aiv-cdn.net/iad-nitro/live/clients/dash/enc/3j04z3pbit/out/v1/042ee0757ed348bf8c26f75895cae871/cenc.mpd",
+          "scheme": 0,
+          "api": "0b59ce06de74ed84f2eda5e81dadba13:48e4ba4ad6c2a60d2bda5d71a0050844",
+          "tokenApi": ""
+        },
+        {
+          "name": "FANCODE - IN",
+          "link": "https://in-mc-fblive.fancode.com/mumbai/142978_english_hls_84812121a137931_1ta-di_h264/index.m3u8",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 330,
+      "order_index": 9,
+      "category": "Football",
+      "event_name": "FIFA World Cup",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/16/image/dark",
+      "team_a": {
+        "name": "England",
+        "logo": "https://img.sofascore.com/api/v1/team/4713/image"
+      },
+      "team_b": {
+        "name": "DR Congo",
+        "logo": "https://img.sofascore.com/api/v1/team/4823/image"
+      },
+      "date": "01/07/2026",
+      "time": "16:00:00",
+      "end_date": "01/07/2026",
+      "end_time": "18:20:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 331,
+      "order_index": 10,
+      "category": "Football",
+      "event_name": "FIFA World Cup",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/16/image/dark",
+      "team_a": {
+        "name": "Portugal",
+        "logo": "https://img.sofascore.com/api/v1/team/4704/image"
+      },
+      "team_b": {
+        "name": "Croatia",
+        "logo": "https://img.sofascore.com/api/v1/team/4715/image"
+      },
+      "date": "02/07/2026",
+      "time": "23:00:00",
+      "end_date": "03/07/2026",
+      "end_time": "01:20:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 332,
+      "order_index": 11,
+      "category": "Football",
+      "event_name": "FIFA World Cup",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/16/image/dark",
+      "team_a": {
+        "name": "USA",
+        "logo": "https://img.sofascore.com/api/v1/team/4724/image"
+      },
+      "team_b": {
+        "name": "BiH",
+        "logo": "https://img.sofascore.com/api/v1/team/4479/image"
+      },
+      "date": "02/07/2026",
+      "time": "00:00:00",
+      "end_date": "02/07/2026",
+      "end_time": "02:20:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 333,
+      "order_index": 12,
+      "category": "Football",
+      "event_name": "FIFA World Cup",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/16/image/dark",
+      "team_a": {
+        "name": "Switzerland",
+        "logo": "https://img.sofascore.com/api/v1/team/4699/image"
+      },
+      "team_b": {
+        "name": "Algeria",
+        "logo": "https://img.sofascore.com/api/v1/team/4691/image"
+      },
+      "date": "03/07/2026",
+      "time": "03:00:00",
+      "end_date": "03/07/2026",
+      "end_time": "05:20:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 334,
+      "order_index": 13,
+      "category": "Football",
+      "event_name": "FIFA World Cup",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/16/image/dark",
+      "team_a": {
+        "name": "Spain",
+        "logo": "https://img.sofascore.com/api/v1/team/4698/image"
+      },
+      "team_b": {
+        "name": "Austria",
+        "logo": "https://img.sofascore.com/api/v1/team/4718/image"
+      },
+      "date": "02/07/2026",
+      "time": "19:00:00",
+      "end_date": "02/07/2026",
+      "end_time": "21:20:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 335,
+      "order_index": 14,
+      "category": "Football",
+      "event_name": "FIFA World Cup",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/16/image/dark",
+      "team_a": {
+        "name": "Belgium",
+        "logo": "https://img.sofascore.com/api/v1/team/4717/image"
+      },
+      "team_b": {
+        "name": "Senegal",
+        "logo": "https://img.sofascore.com/api/v1/team/4739/image"
+      },
+      "date": "01/07/2026",
+      "time": "20:00:00",
+      "end_date": "01/07/2026",
+      "end_time": "22:20:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 336,
+      "order_index": 15,
+      "category": "Football",
+      "event_name": "FIFA World Cup",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/16/image/dark",
+      "team_a": {
+        "name": "Argentina",
+        "logo": "https://img.sofascore.com/api/v1/team/4819/image"
+      },
+      "team_b": {
+        "name": "Cabo Verde",
+        "logo": "https://img.sofascore.com/api/v1/team/4753/image"
+      },
+      "date": "03/07/2026",
+      "time": "22:00:00",
+      "end_date": "04/07/2026",
+      "end_time": "00:20:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 337,
+      "order_index": 16,
+      "category": "Football",
+      "event_name": "FIFA World Cup",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/16/image/dark",
+      "team_a": {
+        "name": "Australia",
+        "logo": "https://img.sofascore.com/api/v1/team/4741/image"
+      },
+      "team_b": {
+        "name": "Egypt",
+        "logo": "https://img.sofascore.com/api/v1/team/4758/image"
+      },
+      "date": "03/07/2026",
+      "time": "18:00:00",
+      "end_date": "03/07/2026",
+      "end_time": "20:20:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 338,
+      "order_index": 17,
+      "category": "Football",
+      "event_name": "FIFA World Cup",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/16/image/dark",
+      "team_a": {
+        "name": "Colombia",
+        "logo": "https://img.sofascore.com/api/v1/team/4820/image"
+      },
+      "team_b": {
+        "name": "Ghana",
+        "logo": "https://img.sofascore.com/api/v1/team/4764/image"
+      },
+      "date": "04/07/2026",
+      "time": "01:30:00",
+      "end_date": "04/07/2026",
+      "end_time": "03:50:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 341,
+      "order_index": 18,
+      "category": "Cricket",
+      "event_name": "Major League Cricket",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/20583/image/dark",
+      "team_a": {
+        "name": "LAKR",
+        "logo": "https://img.sofascore.com/api/v1/team/485011/image"
+      },
+      "team_b": {
+        "name": "WF",
+        "logo": "https://img.sofascore.com/api/v1/team/485015/image"
+      },
+      "date": "02/07/2026",
+      "time": "01:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 342,
+      "order_index": 19,
+      "category": "Cricket",
+      "event_name": "T20 International",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11191/image/dark",
+      "team_a": {
+        "name": "ENG",
+        "logo": "https://img.sofascore.com/api/v1/team/187757/image"
+      },
+      "team_b": {
+        "name": "IND",
+        "logo": "https://img.sofascore.com/api/v1/team/187765/image"
+      },
+      "date": "01/07/2026",
+      "time": "16:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 343,
+      "order_index": 20,
+      "category": "Cricket",
+      "event_name": "Major League Cricket",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/20583/image/dark",
+      "team_a": {
+        "name": "SO",
+        "logo": "https://img.sofascore.com/api/v1/team/485014/image"
+      },
+      "team_b": {
+        "name": "MINY",
+        "logo": "https://img.sofascore.com/api/v1/team/485012/image"
+      },
+      "date": "03/07/2026",
+      "time": "01:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 344,
+      "order_index": 21,
+      "category": "Cricket",
+      "event_name": "Major League Cricket",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/20583/image/dark",
+      "team_a": {
+        "name": "LAKR",
+        "logo": "https://img.sofascore.com/api/v1/team/485011/image"
+      },
+      "team_b": {
+        "name": "WF",
+        "logo": "https://img.sofascore.com/api/v1/team/485015/image"
+      },
+      "date": "02/07/2026",
+      "time": "01:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 345,
+      "order_index": 22,
+      "category": "Cricket",
+      "event_name": "Major League Cricket",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/20583/image/dark",
+      "team_a": {
+        "name": "LAKR",
+        "logo": "https://img.sofascore.com/api/v1/team/485011/image"
+      },
+      "team_b": {
+        "name": "TSK",
+        "logo": "https://img.sofascore.com/api/v1/team/485010/image"
+      },
+      "date": "04/07/2026",
+      "time": "01:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 346,
+      "order_index": 23,
+      "category": "Cricket",
+      "event_name": "Sobers-Tissera Trophy",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/33863/image/dark",
+      "team_a": {
+        "name": "WI",
+        "logo": "https://img.sofascore.com/api/v1/team/187760/image"
+      },
+      "team_b": {
+        "name": "SL",
+        "logo": "https://img.sofascore.com/api/v1/team/187756/image"
+      },
+      "date": "03/07/2026",
+      "time": "14:00:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 347,
+      "order_index": 24,
+      "category": "Cricket",
+      "event_name": "T20 International",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11191/image/dark",
+      "team_a": {
+        "name": "ENG",
+        "logo": "https://img.sofascore.com/api/v1/team/187757/image"
+      },
+      "team_b": {
+        "name": "IND",
+        "logo": "https://img.sofascore.com/api/v1/team/187765/image"
+      },
+      "date": "04/07/2026",
+      "time": "13:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 348,
+      "order_index": 25,
+      "category": "Cricket",
+      "event_name": "Major League Cricket",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/20583/image/dark",
+      "team_a": {
+        "name": "WF",
+        "logo": "https://img.sofascore.com/api/v1/team/485015/image"
+      },
+      "team_b": {
+        "name": "SFU",
+        "logo": "https://img.sofascore.com/api/v1/team/485013/image"
+      },
+      "date": "04/07/2026",
+      "time": "21:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 349,
+      "order_index": 26,
+      "category": "Cricket",
+      "event_name": "Major League Cricket",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/20583/image/dark",
+      "team_a": {
+        "name": "LAKR",
+        "logo": "https://img.sofascore.com/api/v1/team/485011/image"
+      },
+      "team_b": {
+        "name": "MINY",
+        "logo": "https://img.sofascore.com/api/v1/team/485012/image"
+      },
+      "date": "05/07/2026",
+      "time": "01:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 350,
+      "order_index": 27,
+      "category": "Cricket",
+      "event_name": "Major League Cricket",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/20583/image/dark",
+      "team_a": {
+        "name": "SO",
+        "logo": "https://img.sofascore.com/api/v1/team/485014/image"
+      },
+      "team_b": {
+        "name": "TSK",
+        "logo": "https://img.sofascore.com/api/v1/team/485010/image"
+      },
+      "date": "05/07/2026",
+      "time": "21:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 351,
+      "order_index": 28,
+      "category": "Cricket",
+      "event_name": "Major League Cricket",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/20583/image/dark",
+      "team_a": {
+        "name": "SFU",
+        "logo": "https://img.sofascore.com/api/v1/team/485013/image"
+      },
+      "team_b": {
+        "name": "MINY",
+        "logo": "https://img.sofascore.com/api/v1/team/485012/image"
+      },
+      "date": "06/07/2026",
+      "time": "01:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 352,
+      "order_index": 29,
+      "category": "Cricket",
+      "event_name": "One Day International",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11190/image/dark",
+      "team_a": {
+        "name": "ZIM",
+        "logo": "https://img.sofascore.com/api/v1/team/187745/image"
+      },
+      "team_b": {
+        "name": "BAN",
+        "logo": "https://img.sofascore.com/api/v1/team/187744/image"
+      },
+      "date": "06/07/2026",
+      "time": "07:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 353,
+      "order_index": 30,
+      "category": "Cricket",
+      "event_name": "T20 International",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11191/image/dark",
+      "team_a": {
+        "name": "ENG",
+        "logo": "https://img.sofascore.com/api/v1/team/187757/image"
+      },
+      "team_b": {
+        "name": "IND",
+        "logo": "https://img.sofascore.com/api/v1/team/187765/image"
+      },
+      "date": "07/07/2026",
+      "time": "16:30:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 354,
+      "order_index": 31,
+      "category": "Tennis",
+      "event_name": "Tennis | Wimbledon Championships",
+      "event_logo": "https://img.sofascore.com/api/v1/unique-tournament/2361/image",
+      "team_a": {
+        "name": "Wimbledon",
+        "logo": "https://img.sofascore.com/api/v1/unique-tournament/2361/image"
+      },
+      "team_b": {
+        "name": "Wimbledon",
+        "logo": "https://img.sofascore.com/api/v1/unique-tournament/2361/image"
+      },
+      "date": "30/06/2026",
+      "time": "10:27:00",
+      "end_date": null,
+      "end_time": null,
+      "streams": [
+        {
+          "name": "ESPN SPORTS - AQ",
+          "link": "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/cjglydxghe/out/v1/8977baf175da4b94873194613dd3fe55/cenc.mpd|user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+          "scheme": 0,
+          "api": "85b277daf5aae05833fe43a68f587968:d52d7e9bc0bcd98787efd547ac91eca0",
+          "tokenApi": ""
+        },
+        {
+          "name": "TSN SPORTS - AQ",
+          "link": "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/cscevwljkq/out/v1/972185041b244140860b7d56398e9aaf/cenc.mpd|user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+          "scheme": 0,
+          "api": "385ceb9714b75e0cef61254f80b31002:18dce92a2891fee68d21ede5173230f8",
+          "tokenApi": ""
+        },
+        {
+          "name": "SP0TV ",
+          "link": "https://qp-pldt-live-bpk-01-prod.akamaized.net/bpk-tv/cg_spotvhd/default/index.mpd",
+          "scheme": 0,
+          "api": "ec7ee27d83764e4b845c48cca31c8eef:9c0e4191203fccb0fde34ee29999129e",
+          "tokenApi": ""
+        },
+        {
+          "name": "EUROSPORT ",
+          "link": "https://dash2.antik.sk/stream/nvidia_eurosport2/playlist_cenc.mpd",
+          "scheme": 0,
+          "api": "11223344556677889900112233445566:4b80724d0ef86bcb2c21f7999d67739d",
+          "tokenApi": ""
+        },
+        {
+          "name": "ESPN SPORTS SD",
+          "link": "https://xstm.250909.cc/live/SPORTSFLUX-PRD-33990-1/31b4468de9ac/1638.m3u8",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "TSN SPORTS SD",
+          "link": "https://xstm.250909.cc/live/SPORTSFLUX-PRD-33990-1/31b4468de9ac/1636.m3u8",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 356,
+      "order_index": 33,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Orioles",
+        "logo": "https://img.sofascore.com/api/v1/team/3652/image"
+      },
+      "team_b": {
+        "name": "White Sox",
+        "logo": "https://img.sofascore.com/api/v1/team/3644/image"
+      },
+      "date": "01/07/2026",
+      "time": "16:35:00",
+      "end_date": "01/07/2026",
+      "end_time": "19:35:00",
+      "streams": [
+        {
+          "name": "Cricfy Live ",
+          "link": "https://edgestreams.pro/hls/dazhfiach15.m3u8?|Referer=https://streamscenter.online/&Origin=https://streamscenter.online",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD SERVER",
+          "link": "https://instreams.pro/US/MLB1/tracks-v1a1/mono.m3u8?|referer=https://instream.click/&origin=https://instream.click",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 359,
+      "order_index": 36,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Red Sox",
+        "logo": "https://img.sofascore.com/api/v1/team/3646/image"
+      },
+      "team_b": {
+        "name": "Nationals",
+        "logo": "https://img.sofascore.com/api/v1/team/5930/image"
+      },
+      "date": "01/07/2026",
+      "time": "17:35:00",
+      "end_date": "01/07/2026",
+      "end_time": "20:35:00",
+      "streams": [
+        {
+          "name": "Cricfy Live ",
+          "link": "https://mainstreams.pro/hls/jkzahzadach20.m3u8?|Referer=https://streamscenter.online/&Origin=https://streamscenter.online",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD SERVER",
+          "link": "https://instreams.pro/US/MLB6/tracks-v1a1/mono.m3u8?|referer=https://instream.click/&origin=https://instream.click",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 360,
+      "order_index": 37,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Yankees",
+        "logo": "https://img.sofascore.com/api/v1/team/3654/image"
+      },
+      "team_b": {
+        "name": "Tigers",
+        "logo": "https://img.sofascore.com/api/v1/team/3648/image"
+      },
+      "date": "01/07/2026",
+      "time": "17:35:00",
+      "end_date": "01/07/2026",
+      "end_time": "20:35:00",
+      "streams": [
+        {
+          "name": "Cricfy Live ",
+          "link": "https://mainstreams.pro/hls/Czajafjihafch18.m3u8?|Referer=https://streamscenter.online/&Origin=https://streamscenter.online",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD SERVER",
+          "link": "https://instreams.pro/US/MLB4/tracks-v1a1/mono.m3u8?|referer=https://instream.click/&origin=https://instream.click",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 362,
+      "order_index": 39,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Phillies",
+        "logo": "https://img.sofascore.com/api/v1/team/3635/image"
+      },
+      "team_b": {
+        "name": "Pirates",
+        "logo": "https://img.sofascore.com/api/v1/team/3637/image"
+      },
+      "date": "01/07/2026",
+      "time": "22:40:00",
+      "end_date": "02/07/2026",
+      "end_time": "01:40:00",
+      "streams": [
+        {
+          "name": "Cricfy Live ",
+          "link": "https://edge2caster.pro/hls/16yuitzaerghbhc16.m3u8?|Referer=https://streamscenter.online/&Origin=https://streamscenter.online",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD SERVER",
+          "link": "https://instreams.pro/US/MLB2/tracks-v1a1/mono.m3u8?|referer=https://instream.click/&origin=https://instream.click",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 364,
+      "order_index": 41,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Cubs",
+        "logo": "https://img.sofascore.com/api/v1/team/3627/image"
+      },
+      "team_b": {
+        "name": "Padres",
+        "logo": "https://img.sofascore.com/api/v1/team/3636/image"
+      },
+      "date": "01/07/2026",
+      "time": "18:20:00",
+      "end_date": "01/07/2026",
+      "end_time": "21:20:00",
+      "streams": [
+        {
+          "name": "CRICFy Live ",
+          "link": "https://instreams.pro/US/MLB10/index.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=https://instream.click/jwp-us.php?stream=MLB10&Origin=https://instream.click/jwp-us.php?stream=MLB10",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD SERVER",
+          "link": "https://edge2caster.pro/hls/fskjanach24.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=https://streams.center&Origin=https://streams.center",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "CRICFy HD",
+          "link": "https://mainstreams.pro/hls/fskjanach24.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=https://streams.center&Origin=https://streams.center",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 367,
+      "order_index": 44,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Brewers",
+        "logo": "https://img.sofascore.com/api/v1/team/3630/image"
+      },
+      "team_b": {
+        "name": "Reds",
+        "logo": "https://img.sofascore.com/api/v1/team/3633/image"
+      },
+      "date": "02/07/2026",
+      "time": "00:10:00",
+      "end_date": "02/07/2026",
+      "end_time": "03:10:00",
+      "streams": [
+        {
+          "name": "CRICFy Live ",
+          "link": "https://instreams.pro/US/MLB8/index.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=https://instream.click/jwp-us.php?stream=MLB8&Origin=https://instream.click/jwp-us.php?stream=MLB8",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD SERVER",
+          "link": "https://edge2caster.pro/hls/ijfnakfidch22.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=https://streams.center&Origin=https://streams.center",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 372,
+      "order_index": 49,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Rockies",
+        "logo": "https://img.sofascore.com/api/v1/team/3628/image"
+      },
+      "team_b": {
+        "name": "Marlins",
+        "logo": "https://img.sofascore.com/api/v1/team/3639/image"
+      },
+      "date": "02/07/2026",
+      "time": "00:40:00",
+      "end_date": "02/07/2026",
+      "end_time": "03:40:00",
+      "streams": [
+        {
+          "name": "CRICFy Live ",
+          "link": "https://instreams.pro/US/MLB12/index.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=https://instream.click/jwp-us.php?stream=MLB12&Origin=https://instream.click/jwp-us.php?stream=MLB12",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD SERVER",
+          "link": "https://mainstreams.pro/hls/dzjhkfazbka26.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=https://streams.center&Origin=https://streams.center",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "CRICFy HD ",
+          "link": "https://edge2caster.pro/hls/dzjhkfazbka26.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=https://streams.center&Origin=https://streams.center",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 374,
+      "order_index": 51,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Guardians",
+        "logo": "https://img.sofascore.com/api/v1/team/3650/image"
+      },
+      "team_b": {
+        "name": "Rangers",
+        "logo": "https://img.sofascore.com/api/v1/team/3647/image"
+      },
+      "date": "01/07/2026",
+      "time": "17:10:00",
+      "end_date": "01/07/2026",
+      "end_time": "20:10:00",
+      "streams": [
+        {
+          "name": "Cricfy Live ",
+          "link": "https://edgestreams.pro/hls/ihfazugfyjcazich17.m3u8?|Referer=https://streamscenter.online/&Origin=https://streamscenter.online",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD SERVER",
+          "link": "https://instreams.pro/US/MLB3/tracks-v1a1/mono.m3u8?|referer=https://instream.click/&origin=https://instream.click",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 375,
+      "order_index": 52,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Diamondbacks",
+        "logo": "https://img.sofascore.com/api/v1/team/3640/image"
+      },
+      "team_b": {
+        "name": "Giants",
+        "logo": "https://img.sofascore.com/api/v1/team/3634/image"
+      },
+      "date": "02/07/2026",
+      "time": "01:40:00",
+      "end_date": "02/07/2026",
+      "end_time": "04:40:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 377,
+      "order_index": 54,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Athletics",
+        "logo": "https://img.sofascore.com/api/v1/team/3645/image"
+      },
+      "team_b": {
+        "name": "Dodgers",
+        "logo": "https://img.sofascore.com/api/v1/team/3638/image"
+      },
+      "date": "02/07/2026",
+      "time": "01:40:00",
+      "end_date": "02/07/2026",
+      "end_time": "04:40:00",
+      "streams": [
+        {
+          "name": "CRICFy Live ",
+          "link": "https://instreams.pro/US/MLB14/index.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=https://instream.click/jwp-us.php?stream=MLB14&Origin=https://instream.click/jwp-us.php?stream=MLB14",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD SERVER",
+          "link": "https://mainstreams.pro/hls/hefbafbakx28.m3u8|User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 Edg/134.0.0.0&Referer=https://streams.center&Origin=https://streams.center",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    },
+    {
+      "id": 378,
+      "order_index": 55,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Astros",
+        "logo": "https://img.sofascore.com/api/v1/team/3655/image"
+      },
+      "team_b": {
+        "name": "Twins",
+        "logo": "https://img.sofascore.com/api/v1/team/3649/image"
+      },
+      "date": "02/07/2026",
+      "time": "00:10:00",
+      "end_date": "02/07/2026",
+      "end_time": "03:10:00",
+      "streams": [
+        {
+          "name": "Link 1",
+          "link": "http://cricfy-tv.net/promo/cricfy-promo.m3u8"
+        }
+      ]
+    },
+    {
+      "id": 379,
+      "order_index": 56,
+      "category": "Baseball",
+      "event_name": "MLB",
+      "event_logo": "http://api.sofascore.com/api/v1/unique-tournament/11205/image/dark",
+      "team_a": {
+        "name": "Blue Jays",
+        "logo": "https://img.sofascore.com/api/v1/team/3642/image"
+      },
+      "team_b": {
+        "name": "Mets",
+        "logo": "https://img.sofascore.com/api/v1/team/3629/image"
+      },
+      "date": "01/07/2026",
+      "time": "19:07:00",
+      "end_date": "01/07/2026",
+      "end_time": "22:07:00",
+      "streams": [
+        {
+          "name": "Cricfy Live ",
+          "link": "https://edgestreams.pro/hls/bzagLHzach19.m3u8?|Referer=https://streamscenter.online/&Origin=https://streamscenter.online",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        },
+        {
+          "name": "HD SERVER",
+          "link": "https://instreams.pro/US/MLB5/tracks-v1a1/mono.m3u8?|referer=https://instream.click/&origin=https://instream.click",
+          "scheme": 0,
+          "api": "",
+          "tokenApi": ""
+        }
+      ]
+    }
+  ]
+}

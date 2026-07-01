@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Cricfy2 Decryptor (Ultimate Recursive Edition)
-Intègre le téléchargement automatique et RÉCURSIF des sous-catégories (custom) et événements sportifs.
+Cricfy2 Decryptor (Ultimate Edition - Full Database Generator)
+Génère un seul fichier JSON massif et structuré pour la création d'applications.
 """
 
 import base64
@@ -88,25 +88,19 @@ def decrypt_v2_full(encrypted_str: str) -> str:
         missing = len(encrypted_str) % 4
         if missing: encrypted_str += '=' * (4 - missing)
         outer_decoded = base64.b64decode(encrypted_str).decode('latin-1')
-        
         swapped = swap_pairs(outer_decoded)[::-1]
-        
         if not swapped.endswith("abcdefghijklmnop"):
             return encrypted_str
         payload_b64 = swapped[:-16]
-        
         aes_bytes = base64.b64decode(payload_b64.encode('latin-1'))
-        
         cipher = AES.new(V2_KEY, AES.MODE_CBC, V2_IV)
         decrypted_aes_bytes = unpad(cipher.decrypt(aes_bytes), AES.block_size)
         aes_str = decrypted_aes_bytes.decode('latin-1')
-        
         swapped_inner = swap_pairs(aes_str)[::-1]
-        
         final_bytes = base64.b64decode(clean_base64(swapped_inner).encode('latin-1'))
         return final_bytes.decode('utf-8', errors='ignore')
-    except Exception as e:
-        return f"Erreur de déchiffrement AES : {e}"
+    except Exception:
+        return encrypted_str
 
 def xor_hex(s: str) -> str:
     return "".join(f"{(b ^ 0x5A) & 0xFF:02x}" for b in s.encode("utf-8"))
@@ -120,17 +114,13 @@ def build_getdata_url(cfg: dict, host: str, path: str) -> str:
     if not base:
         h = host if host.endswith("/") else host + "/"
         base = h[:-3] if h.lower().endswith("/v2/") else h
-
     endpoint = cfg.get("getdata_endpoint", "") or "getData.php"
     token = cfg.get("getdata_token") or cfg.get("signed_api_token") or TOKEN_DEFAULT
-
     prefix = cfg.get("getdata_path_prefix", "v2/")
     if not prefix.endswith("/"): prefix += "/"
     norm_path = path if path.startswith(prefix) else prefix + path.lstrip("/")
-
     key_param  = xor_hex(norm_path)
     hmac_param = xor_hex(f"{int(time.time())}|{token}")
-
     base = base if base.endswith("/") else base + "/"
     return f"{base}{endpoint}?key={key_param}&hmac={hmac_param}"
 
@@ -138,195 +128,177 @@ def resolve_content_url(cfg: dict, path: str) -> str:
     if path.startswith("http://") or path.startswith("https://"): return path
     host = cfg.get("api2") or cfg.get("api_url") or cfg.get("api_host", "")
     mode = cfg.get("Mode", "").lower()
-    
     if mode == "genz" or cfg.get("getdata_enabled"):
         return build_getdata_url(cfg, host, path)
-    
     host = host if host.endswith("/") else host + "/"
     return host + path.lstrip("/")
 
-def _fetch_bytes(url: str, timeout: int = 20) -> bytes:
+def _fetch_bytes(url: str, timeout: int = 15) -> bytes:
     req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         raw = resp.read()
     return gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw
 
-def _parse_text(text: str) -> object:
-    text = (text or "").strip()
+def parse_json_safely(text: str) -> object:
+    text = str(text).strip()
     if not text: return None
-
     if text.startswith("{") or text.startswith("["):
         try: return json.loads(text)
         except: pass
-
     if text.startswith("cfj1:"):
-        try:
-            decoded = open_config_text(text)
-            return json.loads(decoded)
+        try: return json.loads(open_config_text(text))
         except: pass
-    
     try:
-        decoded_v2 = decrypt_v2_full(text)
-        if decoded_v2 and (decoded_v2.startswith("{") or decoded_v2.startswith("[")):
-            return json.loads(decoded_v2)
-        return decoded_v2
+        dec = decrypt_v2_full(text)
+        if dec and (dec.startswith("{") or dec.startswith("[")):
+            return json.loads(dec)
+        return dec
     except:
         return text
 
-# ═══════════════════════════════════════════════════════════════════
-# 4. EXÉCUTION & SAUVEGARDE RÉCURSIVE
-# ═══════════════════════════════════════════════════════════════════
-
-def fetch_remote_config() -> dict | None:
-    for url in filter(None, [CONFIG_URL_1, CONFIG_URL_2]):
-        print(f"  [GET] config → {url}")
-        try:
-            text = _fetch_bytes(url).decode("utf-8", errors="ignore")
-            cfg  = _parse_text(text)
-            if isinstance(cfg, dict) and cfg.get("enabled", True):
-                return cfg
-        except Exception as e:
-            pass
-    return None
-
-def download(cfg: dict, path: str) -> object:
+def download_and_parse(cfg: dict, path: str) -> object:
     url = resolve_content_url(cfg, path)
     try:
         raw_bytes = _fetch_bytes(url)
-        text = raw_bytes.decode("latin-1", errors="ignore")
-        return _parse_text(text)
-    except URLError as e:
-        print(f"    [réseau] {e.reason}")
-        return None
-    except Exception as e:
-        print(f"    [erreur] {e}")
+        return parse_json_safely(raw_bytes.decode("latin-1", errors="ignore"))
+    except Exception:
         return None
 
-def save(path_name: str, data: object) -> str:
-    # Normalise le nom de chemin (ex: "channels/S29s.txt" -> "channels/S29s.json")
-    normalized = path_name.replace("\\", "/").strip("/")
-    if normalized.endswith(".txt"):
-        normalized = normalized[:-4] + ".json"
-    
-    out_path = os.path.join(OUT_DIR, normalized)
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    
-    with open(out_path, "w", encoding="utf-8") as f:
-        if isinstance(data, (dict, list)):
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        else:
-            f.write(str(data))
-    return out_path
+# ═══════════════════════════════════════════════════════════════════
+# 4. CONSTRUCTION DE LA BASE DE DONNÉES UNIFIÉE
+# ═══════════════════════════════════════════════════════════════════
 
-# Set pour mémoriser les fichiers déjà téléchargés (évite les boucles infinies)
-visited_files = set()
+def build_complete_database(cfg: dict) -> dict:
+    database = {
+        "metadata": {
+            "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "source": "Cricfy2",
+        },
+        "live_tv": [],
+        "sports_tournaments": {},
+        "sports_events": []
+    }
 
-def crawl_recursive(cfg: dict, data: object, level: int = 0):
-    """
-    Parcourt n'importe quel objet JSON.
-    Si c'est un tableau, parcourt chaque élément.
-    S'il détecte une catégorie 'custom' ou un événement contenant des '.txt', 
-    il les télécharge et s'appelle lui-même.
-    """
-    indent = "  " * (level + 1)
-    
-    if isinstance(data, list):
-        for item in data:
-            crawl_recursive(cfg, item, level)
+    print("\n[1/3] Téléchargement des Live TV Categories...")
+    cats_data = download_and_parse(cfg, "categories.txt")
+    if isinstance(cats_data, list):
+        for item in cats_data:
+            if not isinstance(item, dict): continue
             
-    elif isinstance(data, dict):
-        # 1. Vérifier si c'est une Catégorie (cat -> type: custom -> api: .txt)
-        cat_raw = data.get("cat")
-        if cat_raw:
-            cat_obj = cat_raw
-            if isinstance(cat_raw, str):
-                try:
-                    cat_obj = json.loads(cat_raw.replace("\\/", "/"))
-                except Exception:
-                    pass
+            # Convertir le champ 'cat' qui est un string JSON en objet dict
+            cat_obj = item.get("cat")
+            if isinstance(cat_obj, str):
+                cat_obj = parse_json_safely(cat_obj)
             
-            if isinstance(cat_obj, dict) and cat_obj.get("type") == "custom":
-                api_path = cat_obj.get("api", "")
-                if api_path and isinstance(api_path, str) and api_path.endswith(".txt"):
-                    if api_path not in visited_files:
-                        visited_files.add(api_path)
-                        cat_name = cat_obj.get("name", "Unknown Category")
-                        print(f"{indent}📂 [DÉCOUVERTE] Catégorie '{cat_name}' ➔ {api_path}")
+            if isinstance(cat_obj, dict):
+                structured_cat = {
+                    "id": item.get("id"),
+                    "order_index": item.get("order_index"),
+                    "name": cat_obj.get("name"),
+                    "logo": cat_obj.get("logo"),
+                    "type": cat_obj.get("type"),
+                    "playlist_url": cat_obj.get("api") if cat_obj.get("type") == "m3u" else None,
+                    "channels": []
+                }
+
+                # Si type custom, on télécharge les sous-chaines et on les intègre
+                if cat_obj.get("type") == "custom" and cat_obj.get("api"):
+                    print(f"  ➔ Extraction des chaînes pour: {structured_cat['name']}")
+                    channels = download_and_parse(cfg, cat_obj.get("api"))
+                    if isinstance(channels, list):
+                        structured_cat["channels"] = channels
                         
-                        sub_data = download(cfg, api_path)
-                        if sub_data is not None:
-                            saved_file = save(api_path, sub_data)
-                            print(f"{indent}  ✓ Sauvegardé dans: {saved_file}")
-                            # Appel récursif !
-                            crawl_recursive(cfg, sub_data, level + 1)
+                database["live_tv"].append(structured_cat)
 
-        # 2. Vérifier si c'est un Événement Sportif (links -> .txt)
-        links_path = data.get("links")
-        if links_path and isinstance(links_path, str) and links_path.endswith(".txt"):
-            if links_path not in visited_files:
-                visited_files.add(links_path)
-                
-                # Tenter d'extraire un joli nom pour l'affichage
-                ev_name = "Unknown Event"
-                ev_raw = data.get("event")
-                if isinstance(ev_raw, str):
-                    try:
-                        ev_obj = json.loads(ev_raw.replace("\\/", "/"))
-                        ev_name = ev_obj.get("eventDetails", {}).get("eventName", ev_name)
-                        team_a = ev_obj.get("teamA", {}).get("name", "")
-                        team_b = ev_obj.get("teamB", {}).get("name", "")
-                        if team_a and team_b: ev_name += f" ({team_a} vs {team_b})"
-                    except: pass
+    print("\n[2/3] Téléchargement des Sports Tournaments (Mapping)...")
+    tournaments_data = download_and_parse(cfg, "event_cats.txt")
+    if isinstance(tournaments_data, dict):
+        database["sports_tournaments"] = tournaments_data
+        print(f"  ➔ {len(tournaments_data)} tournois/sports mappés.")
 
-                print(f"{indent}🔗 [DÉCOUVERTE] Événement '{ev_name}' ➔ {links_path}")
-                
-                sub_data = download(cfg, links_path)
-                if sub_data is not None:
-                    saved_file = save(links_path, sub_data)
-                    print(f"{indent}  ✓ Sauvegardé dans: {saved_file}")
-                    # Appel récursif au cas où les liens pointeraient eux-mêmes sur d'autres choses
-                    crawl_recursive(cfg, sub_data, level + 1)
+    print("\n[3/3] Téléchargement des Sports Events & Streams...")
+    events_data = download_and_parse(cfg, "events.txt")
+    if isinstance(events_data, list):
+        for i, ev in enumerate(events_data):
+            if not isinstance(ev, dict): continue
+            
+            # Convertir le champ 'event' qui est un string JSON en objet dict
+            event_obj = ev.get("event")
+            if isinstance(event_obj, str):
+                event_obj = parse_json_safely(event_obj)
+            
+            if isinstance(event_obj, dict):
+                structured_event = {
+                    "id": ev.get("id"),
+                    "order_index": ev.get("order_index"),
+                    "category": event_obj.get("eventDetails", {}).get("category"),
+                    "event_name": event_obj.get("eventDetails", {}).get("eventName"),
+                    "event_logo": event_obj.get("eventDetails", {}).get("eventLogo"),
+                    "team_a": event_obj.get("teamA"),
+                    "team_b": event_obj.get("teamB"),
+                    "date": event_obj.get("date"),
+                    "time": event_obj.get("time"),
+                    "end_date": event_obj.get("end_date"),
+                    "end_time": event_obj.get("end_time"),
+                    "streams": []
+                }
+
+                # Récupération des streams associés à l'événement
+                links_path = event_obj.get("links")
+                if links_path and isinstance(links_path, str) and links_path.endswith(".txt"):
+                    print(f"  ➔ Fetch streams [{i+1}/{len(events_data)}]: {structured_event['event_name']}")
+                    streams = download_and_parse(cfg, links_path)
+                    
+                    # Les streams sont souvent retournés sous forme de string JSON qu'il faut re-parser
+                    if isinstance(streams, str):
+                        streams = parse_json_safely(streams)
+
+                    if isinstance(streams, list):
+                        structured_event["streams"] = streams
+                        
+                database["sports_events"].append(structured_event)
+                time.sleep(0.1) # Petit délai pour ne pas saturer l'API
+
+    return database
 
 # ═══════════════════════════════════════════════════════════════════
 # 5. MAIN ENTRY POINT
 # ═══════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    print("=" * 70)
-    print("  CRICFY2 DECRYPTOR ULTIMATE (Recursive Crawler / AES V2 + XOR)")
-    print("=" * 70)
+    print("=" * 65)
+    print("  CRICFY2 DECRYPTOR ULTIMATE - FULL JSON API GENERATOR")
+    print("=" * 65)
 
-    # 1. Config distante
-    print("\n[1/3] Récupération de la configuration globale…")
-    cfg = fetch_remote_config()
+    cfg = None
+    for url in filter(None, [CONFIG_URL_1, CONFIG_URL_2]):
+        print(f"[*] Fetching config: {url}")
+        try:
+            raw = _fetch_bytes(url).decode("utf-8", errors="ignore")
+            cfg = parse_json_safely(raw)
+            if isinstance(cfg, dict) and cfg.get("enabled", True):
+                break
+        except Exception:
+            pass
+
     if not cfg:
-        print("  ✗ Impossible de récupérer la config")
-        raise SystemExit(1)
+        print("✗ Impossible de récupérer la config.")
+        exit(1)
+
+    # Lancement de la construction de la base de données
+    complete_db = build_complete_database(cfg)
+
+    # Sauvegarde du super-JSON
+    os.makedirs(OUT_DIR, exist_ok=True)
+    out_path = os.path.join(OUT_DIR, "cricfy_database.json")
     
-    save("_config.json", cfg)
-    print("  ✓ Config sauvegardée")
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(complete_db, f, ensure_ascii=False, indent=2)
 
-    # 2. Fichiers racines
-    print("\n[2/3] Téléchargement des points d'entrée principaux…")
-    CONTENT_FILES = ["events.txt", "event_cats.txt", "categories.txt"]
-    root_data = {}
-    
-    for f in CONTENT_FILES:
-        print(f"  → Récupération de {f}")
-        visited_files.add(f)
-        data = download(cfg, f)
-        if data is not None:
-            save(f, data)
-            root_data[f] = data
-            print(f"    ✓ Succès ({len(data) if isinstance(data, list) else 1} entrées)")
-
-    # 3. Crawler Récursif (Magie)
-    print("\n[3/3] Début du Crawler Récursif (Sous-catégories et Événements)…")
-    for f, data in root_data.items():
-        print(f"\n  🔍 Analyse de la racine '{f}' :")
-        crawl_recursive(cfg, data, level=0)
-
-    print(f"\n{'=' * 70}")
-    print(f"  🎉 Terminé ! Tous les fichiers sont déchiffrés dans le dossier : ./{OUT_DIR}/")
-    print(f"     Fichiers uniques téléchargés : {len(visited_files)}")
-    print("=" * 70)
+    print(f"\n{'=' * 65}")
+    print(f"✅ SUCCÈS ! La base de données complète a été générée :")
+    print(f"📂 Chemin : {out_path}")
+    print(f"📊 Statistiques :")
+    print(f"   - Catégories Live TV : {len(complete_db['live_tv'])}")
+    print(f"   - Événements Sportifs : {len(complete_db['sports_events'])}")
+    print("=" * 65)
