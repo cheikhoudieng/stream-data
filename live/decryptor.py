@@ -195,6 +195,7 @@ def fetch_remote_config() -> dict | None:
         print(f"  config → {url}")
         try:
             text = _fetch_bytes(url).decode("utf-8", errors="ignore")
+            print(text)
             cfg  = _parse_text(text)
             if isinstance(cfg, dict) and cfg.get("enabled", True):
                 return cfg
